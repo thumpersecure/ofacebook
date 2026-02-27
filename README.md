@@ -1,5 +1,6 @@
-# FB OSINT Terminal 2036
+# FB OSINT MOBILE WEB APP v20.36
 
+**https://thumpersecure.github.io/ofacebook/**
 A futuristic Facebook OSINT tool using URL prefix enumeration. Built for GitHub Pages with an immersive 2036-style UI.
 
 **Prefix source:** [thumpersecure/thumpersecure facebook-prefix-list.md](https://github.com/thumpersecure/thumpersecure/blob/main/facebook-prefix-list.md)
