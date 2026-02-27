@@ -7,8 +7,7 @@ import { debounce, safeStr } from '../utils/lang.js';
 import { escapeHtml, sanitizeForUrl } from '../utils/security.js';
 import { buildUrl as buildPrefixUrl, THUMPERSECURE_PREFIXES, METHOD_COMBINATIONS } from '../prefix-library.js';
 import { createAssistant } from '../assistant/assistant.js';
-import { getPlan, getPlanId, setPlanId, getProvider, setProvider, setOpenAIKey, setAnthropicKey, hasFeature } from '../commercial/entitlements.js';
-import { canConsume, increment, getUsage } from '../commercial/usage.js';
+import { getProvider, setProvider, setOpenAIKey, setAnthropicKey, clearLocalSettings } from './settings.js';
 import { getPrefixIndex, matchPrefixHost, resolvePrefixHost } from '../domain/prefixes.js';
 import { getMethodCombinations, getMethodById } from '../domain/methods.js';
 import { getPresets, addPreset, removePreset } from './presets.js';
@@ -72,7 +71,7 @@ export function initApp() {
   const comboList = $('#combo-list');
   const urlOutput = $('#url-output');
   const themeToggle = $('#theme-toggle');
-  const upgradeBtn = $('#upgrade-btn');
+  const settingsBtn = $('#settings-btn');
   const copyBtn = $('#url-copy-btn');
   const activeGoalLabel = $('#active-goal');
   const exportCsvBtn = $('#export-csv-btn');
@@ -127,43 +126,21 @@ export function initApp() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
-  function openPricingModal() {
-    const plan = getPlan();
-    const usage = getUsage();
+  function openSettingsModal() {
     const presets = getPresets();
 
-    const plans = ['free', 'pro', 'enterprise'].map((id) => {
-      const p = id === 'free' ? 'Free' : id === 'pro' ? 'Pro' : 'Enterprise';
-      const price = id === 'free' ? '$0' : id === 'pro' ? '$12/mo' : 'Contact';
-      const active = plan.id === id ? ' (current)' : '';
-      return `<option value="${id}" ${plan.id === id ? 'selected' : ''}>${p} — ${price}${active}</option>`;
-    });
-
     const provider = getProvider();
-    const providerDisabled = hasFeature('llmProviders') ? '' : 'disabled';
 
     modal.open(`
-      <h2 class="modal__title">Plans & Settings</h2>
-      <p class="modal__subtitle">Client-side demo gating (no backend). Limits reset daily.</p>
-
-      <div class="modal__section">
-        <h3>Plan</h3>
-        <div class="modal__field">
-          <label for="plan-select">Current plan</label>
-          <select id="plan-select">${plans.join('')}</select>
-        </div>
-        <div class="modal__field">
-          <label>Today usage</label>
-          <div class="modal__subtitle">Searches: ${usage.searches} • Assistant messages: ${usage.assistantMessages}</div>
-        </div>
-      </div>
+      <h2 class="modal__title">Settings</h2>
+      <p class="modal__subtitle">Everything runs locally in your browser (static app). No accounts, no tracking.</p>
 
       <div class="modal__section">
         <h3>Assistant provider</h3>
         <p class="modal__subtitle">Optional BYO API key. Keys are stored in <code>localStorage</code> in your browser.</p>
         <div class="modal__field">
           <label for="provider-select">Provider</label>
-          <select id="provider-select" ${providerDisabled}>
+          <select id="provider-select">
             <option value="local" ${provider === 'local' ? 'selected' : ''}>Local (offline)</option>
             <option value="openai" ${provider === 'openai' ? 'selected' : ''}>OpenAI (BYO key)</option>
             <option value="anthropic" ${provider === 'anthropic' ? 'selected' : ''}>Anthropic (BYO key)</option>
@@ -171,21 +148,22 @@ export function initApp() {
         </div>
         <div class="modal__field">
           <label for="openai-key">OpenAI API key</label>
-          <input id="openai-key" type="password" inputmode="text" autocomplete="off" placeholder="sk-..." ${providerDisabled}>
+          <input id="openai-key" type="password" inputmode="text" autocomplete="off" placeholder="sk-...">
         </div>
         <div class="modal__field">
           <label for="anthropic-key">Anthropic API key</label>
-          <input id="anthropic-key" type="password" inputmode="text" autocomplete="off" placeholder="sk-ant-..." ${providerDisabled}>
+          <input id="anthropic-key" type="password" inputmode="text" autocomplete="off" placeholder="sk-ant-...">
         </div>
         <div class="modal__actions">
           <button type="button" class="btn btn--primary" id="save-settings">Save</button>
+          <button type="button" class="btn btn--danger" id="clear-settings">Clear local keys</button>
           <button type="button" class="btn" id="close-settings">Close</button>
         </div>
       </div>
 
       <div class="modal__section">
         <h3>Presets</h3>
-        <p class="modal__subtitle">Save frequently-used targets + goals. Pro feature.</p>
+        <p class="modal__subtitle">Save frequently-used targets + goals for one-click reuse.</p>
         <div class="modal__subtitle">${presets.length ? `${presets.length} saved` : 'No presets saved yet.'}</div>
         <div class="modal__actions" id="preset-actions">
           ${presets
@@ -200,22 +178,26 @@ export function initApp() {
       </div>
     `);
 
-    const planSelect = $('#plan-select', document.getElementById('modal-body'));
     const providerSelect = $('#provider-select', document.getElementById('modal-body'));
     const openaiKey = $('#openai-key', document.getElementById('modal-body'));
     const anthropicKey = $('#anthropic-key', document.getElementById('modal-body'));
     const saveBtn = $('#save-settings', document.getElementById('modal-body'));
+    const clearBtn = $('#clear-settings', document.getElementById('modal-body'));
     const closeBtn = $('#close-settings', document.getElementById('modal-body'));
 
     saveBtn?.addEventListener('click', () => {
-      const newPlan = planSelect?.value || 'free';
-      setPlanId(newPlan);
       const newProvider = providerSelect?.value || 'local';
       setProvider(newProvider);
       setOpenAIKey(openaiKey?.value || '');
       setAnthropicKey(anthropicKey?.value || '');
-      toasts.show(`Saved settings (plan: ${getPlanId()}, provider: ${getProvider()})`, 'success');
+      toasts.show(`Saved settings (provider: ${getProvider()})`, 'success');
       modal.close();
+    });
+    clearBtn?.addEventListener('click', () => {
+      clearLocalSettings();
+      toasts.show('Cleared local assistant keys', 'info');
+      modal.close();
+      openSettingsModal();
     });
     closeBtn?.addEventListener('click', () => modal.close());
 
@@ -238,7 +220,7 @@ export function initApp() {
         removePreset(id);
         toasts.show('Preset deleted', 'info');
         modal.close();
-        openPricingModal();
+        openSettingsModal();
       });
     });
   }
@@ -247,11 +229,6 @@ export function initApp() {
     const target = state.lastTarget || searchInput?.value?.trim() || '';
     if (!target) {
       toasts.show('Nothing to save yet — run a search first.', 'info');
-      return;
-    }
-    if (!hasFeature('savedPresets')) {
-      toasts.show('Presets are a Pro feature.', 'info');
-      openPricingModal();
       return;
     }
 
@@ -362,27 +339,17 @@ export function initApp() {
     const raw = searchInput?.value?.trim() || '';
     if (!raw || !resultsGrid) return;
 
-    const ok = canConsume('searches', 1);
-    if (!ok.ok) {
-      toasts.show(`Daily search limit reached (${ok.limit}).`, 'error');
-      openPricingModal();
-      return;
-    }
-
     const safe = sanitizeForUrl(raw, MAX_INPUT_LEN);
     if (!safe) return;
 
     state.lastTarget = safe;
-    increment('searches', 1);
 
-    const plan = getPlan();
     const goal = getMethodById(state.goalId) || methods[0];
     const prefixHosts = (goal.prefixes || [])
       .map((p) => resolvePrefixHost(prefixIndex, p))
       .filter(Boolean);
 
-    const max = plan.limits?.maxResultsPerSearch ?? 8;
-    const picked = prefixHosts.slice(0, max);
+    const picked = prefixHosts.slice(0, 14);
 
     const frag = document.createDocumentFragment();
     const newResults = [];
@@ -431,11 +398,6 @@ export function initApp() {
 
   function exportLastResultsCsv() {
     if (!state.lastResults?.length) return;
-    if (!hasFeature('export')) {
-      toasts.show('Export is a Pro feature.', 'info');
-      openPricingModal();
-      return;
-    }
 
     const rows = [['host', 'category', 'url'], ...state.lastResults.map((r) => [r.host, r.category, r.url])];
     downloadText('fb-osint-results.csv', toCsv(rows));
@@ -444,11 +406,6 @@ export function initApp() {
 
   function bulkOpenLastResults() {
     if (!state.lastResults?.length) return;
-    if (!hasFeature('bulkOpen')) {
-      toasts.show('Bulk open is a Pro feature.', 'info');
-      openPricingModal();
-      return;
-    }
 
     const urls = state.lastResults.slice(0, 12).map((r) => r.url);
     for (const u of urls) window.open(u, '_blank', 'noopener,noreferrer');
@@ -489,7 +446,7 @@ export function initApp() {
     }
     if (action.type === 'openModal') {
       const p = action.payload || {};
-      if (p.modal === 'pricing') openPricingModal();
+      if (p.modal === 'settings') openSettingsModal();
       if (p.modal === 'methods') {
         const method = getMethodById(p.methodId) || methods[0];
         modal.open(`
@@ -511,15 +468,7 @@ export function initApp() {
     const raw = (text ?? chatInput?.value ?? '').toString().trim();
     if (!raw) return;
 
-    const ok = canConsume('assistantMessages', 1);
-    if (!ok.ok) {
-      toasts.show(`Daily assistant limit reached (${ok.limit}).`, 'error');
-      openPricingModal();
-      return;
-    }
-
     addAssistantMessage('user', raw);
-    increment('assistantMessages', 1);
     if (chatInput) chatInput.value = '';
 
     const res = await assistant.respond(raw, { lastTarget: state.lastTarget, lastResults: state.lastResults });
@@ -534,9 +483,9 @@ export function initApp() {
       const base = [
         { id: 'focus-search', label: 'Focus Search', icon: '⌁', hint: 'Enter', run: () => searchInput?.focus() },
         { id: 'toggle-theme', label: `Theme: ${getTheme()}`, icon: '◐', hint: 'T', run: () => { const t = toggleTheme(); toasts.show(`Theme: ${t}`, 'info'); } },
-        { id: 'open-settings', label: 'Plans & Settings', icon: '⧉', hint: 'P', run: () => openPricingModal() },
-        { id: 'export', label: 'Export last results (CSV)', icon: '⇩', hint: 'Pro', run: () => exportLastResultsCsv() },
-        { id: 'bulk-open', label: 'Bulk open last results', icon: '↗', hint: 'Pro', run: () => bulkOpenLastResults() },
+        { id: 'open-settings', label: 'Settings', icon: '⧉', hint: 'S', run: () => openSettingsModal() },
+        { id: 'export', label: 'Export last results (CSV)', icon: '⇩', hint: 'E', run: () => exportLastResultsCsv() },
+        { id: 'bulk-open', label: 'Bulk open last results', icon: '↗', hint: 'O', run: () => bulkOpenLastResults() },
       ];
 
       const methodItems = methods.map((m) => ({
@@ -643,7 +592,7 @@ export function initApp() {
       const t = toggleTheme();
       toasts.show(`Theme: ${t}`, 'info');
     });
-    on(upgradeBtn, 'click', openPricingModal);
+    on(settingsBtn, 'click', openSettingsModal);
     on(exportCsvBtn, 'click', exportLastResultsCsv);
     on(bulkOpenBtn, 'click', bulkOpenLastResults);
     on(savePresetBtn, 'click', openSavePresetModal);

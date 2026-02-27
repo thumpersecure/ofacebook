@@ -2,19 +2,6 @@
 
 This app is static and does not require environment variables for basic use.
 
-## Plans (client-side demo gating)
-
-Open **Upgrade** (top bar) to change the active plan:
-
-- Free
-- Pro
-- Enterprise
-
-Plan affects:
-
-- daily usage limits (searches, assistant messages)
-- feature flags (export, bulk-open, optional LLM providers)
-
 ## Assistant providers (optional)
 
 By default the assistant runs **Local (offline)**.

@@ -1,6 +1,6 @@
 # FB OSINT Terminal 2036
 
-An immersive, client-side Facebook OSINT workflow builder that turns a target path (username / numeric ID / route) into **high-signal URL variants** across the thumpersecure prefix universe — with a powerful in-app assistant, command palette, and commercial-grade plan gating scaffolding.
+An immersive, client-side Facebook OSINT workflow builder that turns a target path (username / numeric ID / route) into **high-signal URL variants** across the thumpersecure prefix universe — with a powerful in-app assistant, command palette, and a commercial-grade (enterprise-quality) UI/architecture.
 
 - **Live demo**: `https://thumpersecure.github.io/ofacebook/`
 - **Prefix source**: `thumpersecure/thumpersecure` (`facebook-prefix-list.md`)
@@ -9,7 +9,7 @@ An immersive, client-side Facebook OSINT workflow builder that turns a target pa
 
 - **Modern modular architecture**: `app.js` is now a thin bootstrap; core logic lives in `src/app/init.js`.
 - **Command Palette**: press **Ctrl/Cmd+K** for actions, goals, and quick-open.
-- **Plans & feature gating (client-side demo)**: limits, Pro feature switches, upgrade modal.
+- **Settings**: assistant provider selection (optional BYO key) + presets.
 - **Assistant upgrade**:
   - multi-turn context (remembers last target + last results)
   - actionable buttons (copy/open/run search/export)
@@ -36,8 +36,8 @@ Then open `http://localhost:5173`.
 
 - **Ctrl/Cmd+K**: command palette
 - **T** (while focused on the page): toggle theme
-- **Ctrl/Cmd+E**: export last results (Pro)
-- **Ctrl/Cmd+O**: bulk open last results (Pro)
+- **Ctrl/Cmd+E**: export last results
+- **Ctrl/Cmd+O**: bulk open last results
 
 ## Security model
 
@@ -53,7 +53,8 @@ Then open `http://localhost:5173`.
 - `styles.css`: UI theme + components
 - `src/app/init.js`: app controller (rendering, events, state)
 - `src/assistant/assistant.js`: assistant engine + optional providers
-- `src/commercial/*`: plans, entitlements, usage limits
+- `src/app/settings.js`: assistant provider settings (optional)
+- `src/app/presets.js`: saved presets
 - `src/ui/*`: modal / toasts / command palette / theme
 - `src/prefix-library.js`: thumpersecure-derived prefix list + method combinations
 
