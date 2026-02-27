@@ -467,6 +467,12 @@ export function initApp() {
       window.open(String(action.payload || ''), '_blank', 'noopener,noreferrer');
       return;
     }
+    if (action.type === 'setGoal') {
+      const goalId = action.payload?.goalId || action.payload || 'profile-discovery';
+      setGoal(String(goalId));
+      toasts.show(`Goal set: ${String(goalId)}`, 'info');
+      return;
+    }
     if (action.type === 'runSearch') {
       if (searchInput) searchInput.value = String(action.payload || '');
       updateUrlPreview();
@@ -475,6 +481,10 @@ export function initApp() {
     }
     if (action.type === 'exportCsv') {
       exportLastResultsCsv();
+      return;
+    }
+    if (action.type === 'bulkOpen') {
+      bulkOpenLastResults();
       return;
     }
     if (action.type === 'openModal') {

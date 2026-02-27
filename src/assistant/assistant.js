@@ -56,6 +56,61 @@ function localRespond(text, ctx) {
   const methods = ctx.methods;
   const q = safeStr(text, 800);
 
+  const trimmed = q.trim();
+  if (trimmed.startsWith('/')) {
+    const [cmdRaw, ...rest] = trimmed.slice(1).split(/\s+/);
+    const cmd = (cmdRaw || '').toLowerCase();
+    const arg = rest.join(' ').trim();
+
+    if (cmd === 'help') {
+      return {
+        text:
+          `Commands:\n` +
+          `- \`/goal <id>\` (example: \`/goal link-tracking\`)\n` +
+          `- \`/export\` (Pro)\n` +
+          `- \`/bulkopen\` (Pro)\n` +
+          `- \`/plans\`\n`,
+        actions: [
+          { type: 'openModal', label: 'View plans', payload: { modal: 'pricing' } },
+          { type: 'openModal', label: 'View methods', payload: { modal: 'methods' } },
+        ],
+      };
+    }
+
+    if (cmd === 'plans') {
+      return { text: 'Opening plans & settings.', actions: [{ type: 'openModal', label: 'Plans & Settings', payload: { modal: 'pricing' } }] };
+    }
+
+    if (cmd === 'goal') {
+      const id = arg || 'profile-discovery';
+      const exists = methods.some((m) => m.id === id);
+      if (!exists) {
+        return {
+          text: `Unknown goal id: \`${id}\`. Try: ${methods.slice(0, 8).map((m) => `\`${m.id}\``).join(', ')}.`,
+          actions: [{ type: 'openModal', label: 'View methods', payload: { modal: 'methods' } }],
+        };
+      }
+      return {
+        text: `Goal set to \`${id}\`. Now run a search target (username/id/path).`,
+        actions: [{ type: 'setGoal', label: `Set goal: ${id}`, payload: { goalId: id } }],
+      };
+    }
+
+    if (cmd === 'export') {
+      return {
+        text: `Exporting last results (CSV).`,
+        actions: [{ type: 'exportCsv', label: 'Export CSV', payload: {} }],
+      };
+    }
+
+    if (cmd === 'bulkopen') {
+      return {
+        text: `Bulk-opening last results.`,
+        actions: [{ type: 'bulkOpen', label: 'Bulk open', payload: {} }],
+      };
+    }
+  }
+
   const url = extractFirstUrl(q);
   const urlAnalysis = url ? analyzeFacebookUrl(url) : null;
 
@@ -98,6 +153,7 @@ function localRespond(text, ctx) {
       upsell,
     actions: [
       ...(target ? [{ type: 'runSearch', label: `Search “${target}”`, payload: target }] : []),
+      { type: 'setGoal', label: `Set goal: ${method?.id}`, payload: { goalId: method?.id } },
       { type: 'openModal', label: 'View methods', payload: { modal: 'methods', methodId: method?.id } },
       ...(hasFeature('export') && ctx.lastResults?.length ? [{ type: 'exportCsv', label: 'Export last results', payload: {} }] : []),
     ],
