@@ -1,0 +1,13 @@
+{
+  "name": "ofacebook",
+  "version": "0.1.0",
+  "description": "Facebook OSINT tool using prefixes - mobile web app",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js 2>/dev/null || echo 'Run: npm test (after npm install)'"
+  },
+  "keywords": ["osint", "facebook", "prefix"],
+  "author": "",
+  "license": "MIT"
+}

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Facebook OSINT Tool - Futuristic prefix-based research assistant using thumpersecure subdomain enumeration">
+  <!--
+    SECURITY: Content-Security-Policy restricts resource loading.
+    - default-src 'self': Only same-origin by default
+    - script-src 'self': No inline scripts, no eval - prevents XSS
+    - style-src 'self' https://fonts.googleapis.com: External fonts only from trusted CDN
+    - font-src 'self' https://fonts.gstatic.com: Font files from trusted CDN
+    - form-action 'self' base-uri 'self': Prevents form/base hijacking
+    - frame-ancestors 'self': Prevents clickjacking
+    - All processing is client-side; no sensitive data stored
+  -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; form-action 'self'; base-uri 'self'; frame-ancestors 'self';">
+  <title>FB OSINT Terminal 2036 | Facebook Prefix Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="grid-bg" aria-hidden="true"></div>
+  <div class="glow-orb glow-orb--1" aria-hidden="true"></div>
+  <div class="glow-orb glow-orb--2" aria-hidden="true"></div>
+
+  <header class="header">
+    <div class="header__inner">
+      <div class="logo">
+        <span class="logo__icon">◈</span>
+        <span class="logo__text">FB OSINT</span>
+        <span class="logo__year">2036</span>
+      </div>
+      <nav class="nav" role="navigation">
+        <button type="button" class="nav__btn nav__btn--active" aria-pressed="true" data-panel="0">Search</button>
+        <button type="button" class="nav__btn" aria-pressed="false" data-panel="1">Library</button>
+        <button type="button" class="nav__btn" aria-pressed="false" data-panel="2">Methods</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main" id="main-content">
+    <!-- Search Panel -->
+    <section class="main-panel main-panel--active" data-panel="0">
+      <section class="search-section">
+        <div class="search-box glass">
+          <label for="search-input" class="visually-hidden">Target identifier</label>
+          <div class="search-box__input-wrap">
+            <span class="search-box__prefix">&gt;</span>
+            <input
+              type="search"
+              id="search-input"
+              class="search-box__input"
+              placeholder="Username, ID, or path..."
+              autocomplete="off"
+              aria-describedby="search-hint"
+            >
+          </div>
+          <p id="search-hint" class="search-box__hint">Enter Facebook username, numeric ID, or path. Results open in new tab.</p>
+          <div class="search-box__actions">
+            <button type="button" class="search-box__submit" aria-label="Execute search">
+              <span class="search-box__submit-text">Execute</span>
+              <span class="search-box__submit-icon">▶</span>
+            </button>
+            <output id="url-output" class="search-box__url-preview" for="search-input">https://www.facebook.com/</output>
+          </div>
+        </div>
+
+        <div class="method-selector glass">
+          <span class="method-selector__label">Quick methods</span>
+          <div class="method-selector__chips">
+            <button type="button" class="method-chip" data-query="find profile">Profile</button>
+            <button type="button" class="method-chip" data-query="track links">Links</button>
+            <button type="button" class="method-chip" data-query="business research">Business</button>
+            <button type="button" class="method-chip" data-query="api discovery">API</button>
+            <button type="button" class="method-chip" data-query="locale search">Locale</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="results-section">
+        <h2 class="results__title">Query Results</h2>
+        <div class="results-grid" id="results-grid">
+          <div class="results-placeholder">
+            <p>Enter a username or ID above and click Execute. The assistant will recommend the best prefix combinations.</p>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- Library Panel -->
+    <section class="main-panel" data-panel="1">
+      <div class="library-header glass">
+        <h2>Prefix Library</h2>
+        <p>Subdomains from <a href="https://github.com/thumpersecure/thumpersecure/blob/main/facebook-prefix-list.md" target="_blank" rel="noopener noreferrer">thumpersecure</a>. Click to open with your search path.</p>
+      </div>
+      <div class="prefix-grid" id="prefix-list"></div>
+    </section>
+
+    <!-- Methods Panel -->
+    <section class="main-panel" data-panel="2">
+      <div class="methods-header glass">
+        <h2>Method Combinations</h2>
+        <p>Recommended prefix combinations for specific OSINT goals.</p>
+      </div>
+      <div class="combo-grid" id="combo-list"></div>
+    </section>
+
+    <aside class="chat-panel glass" id="chat-panel">
+      <div class="chat-panel__header">
+        <h2 class="chat-panel__title">Assistant</h2>
+        <button type="button" class="chat-panel__toggle" aria-expanded="true" aria-controls="chat-messages">
+          <span class="chat-panel__toggle-icon">−</span>
+        </button>
+      </div>
+      <div class="chat-panel__messages" id="chat-messages"></div>
+      <div class="chat-panel__input-wrap">
+        <label for="chat-input" class="visually-hidden">Ask assistant</label>
+        <input
+          type="text"
+          id="chat-input"
+          class="chat-panel__input"
+          placeholder="e.g. find profile, track links..."
+          aria-label="Ask assistant"
+        >
+        <button type="button" class="chat-panel__send" aria-label="Send">↑</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <span class="footer__status">System online</span>
+    <span class="footer__version">v2.0.36 | <a href="https://github.com/thumpersecure/thumpersecure/blob/main/facebook-prefix-list.md" target="_blank" rel="noopener noreferrer">thumpersecure</a></span>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

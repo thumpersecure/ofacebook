@@ -1,0 +1,9 @@
+# Security policy for Facebook OSINT Tool
+# https://securitytxt.org/
+# Place at /.well-known/security.txt or /security.txt for discovery
+
+Contact: mailto:security@example.com
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: en
+
+# Static client-side app. Report HTML/JS/CSS or deployment vulnerabilities.
