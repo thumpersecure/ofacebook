@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--
+    SECURITY: Content-Security-Policy restricts resource loading.
+    - default-src 'self': Only same-origin by default
+    - script-src 'self': No inline scripts, no eval - prevents XSS via script injection
+    - style-src 'self' https://fonts.googleapis.com: External fonts only from trusted CDN
+    - font-src 'self' https://fonts.gstatic.com: Font files from trusted CDN
+    - form-action 'self' base-uri 'self': Prevents form/base hijacking
+    - frame-ancestors 'self': Prevents clickjacking
+    - No sensitive data stored - all processing is client-side
+  -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; form-action 'self'; base-uri 'self'; frame-ancestors 'self';">
+  <title>OSINT Terminal 2036</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <header class="header">
+    <div class="header__inner">
+      <div class="logo">
+        <span class="logo__icon">◈</span>
+        <span class="logo__text">OSINT Terminal</span>
+        <span class="logo__year">2036</span>
+      </div>
+      <nav class="nav">
+        <button type="button" class="nav__btn nav__btn--active" aria-pressed="true">Search</button>
+        <button type="button" class="nav__btn" aria-pressed="false">History</button>
+        <button type="button" class="nav__btn" aria-pressed="false">Settings</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main" id="main-content">
+    <section class="search-section">
+      <div class="search-box glass">
+        <label for="search-input" class="visually-hidden">Search query</label>
+        <div class="search-box__input-wrap">
+          <span class="search-box__prefix">&gt;</span>
+          <input
+            type="search"
+            id="search-input"
+            class="search-box__input"
+            placeholder="Enter target identifier..."
+            autocomplete="off"
+            aria-describedby="search-hint"
+          >
+        </div>
+        <p id="search-hint" class="search-box__hint">Username, ID, URL, or phone</p>
+        <button type="button" class="search-box__submit" aria-label="Execute search">
+          <span class="search-box__submit-text">Execute</span>
+          <span class="search-box__submit-icon">▶</span>
+        </button>
+      </div>
+
+      <div class="method-selector glass">
+        <span class="method-selector__label">Method</span>
+        <div class="method-selector__options" role="group" aria-label="Search method">
+          <input type="radio" name="method" id="method-prefix" value="prefix" checked>
+          <label for="method-prefix" class="method-option">Prefix</label>
+          <input type="radio" name="method" id="method-reverse" value="reverse">
+          <label for="method-reverse" class="method-option">Reverse</label>
+          <input type="radio" name="method" id="method-deep" value="deep">
+          <label for="method-deep" class="method-option">Deep Scan</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="results-section">
+      <h2 class="results__title">Query Results</h2>
+      <div class="results-grid">
+        <article class="result-card glass">
+          <div class="result-card__header">
+            <span class="result-card__type">Profile</span>
+            <span class="result-card__confidence">94%</span>
+          </div>
+          <h3 class="result-card__title">john.doe.2024</h3>
+          <pre class="result-card__data"><code>ID: 100012345678901
+Prefix: 1000123456
+Region: US-Central</code></pre>
+          <div class="result-card__meta">
+            <span>Last seen: 2h ago</span>
+          </div>
+        </article>
+        <article class="result-card glass">
+          <div class="result-card__header">
+            <span class="result-card__type">Match</span>
+            <span class="result-card__confidence">87%</span>
+          </div>
+          <h3 class="result-card__title">johndoe.business</h3>
+          <pre class="result-card__data"><code>ID: 100098765432109
+Prefix: 1000987654
+Type: Page</code></pre>
+          <div class="result-card__meta">
+            <span>Verified</span>
+          </div>
+        </article>
+        <article class="result-card glass">
+          <div class="result-card__header">
+            <span class="result-card__type">Partial</span>
+            <span class="result-card__confidence">62%</span>
+          </div>
+          <h3 class="result-card__title">john_doe_fan</h3>
+          <pre class="result-card__data"><code>ID: 100055555555555
+Prefix: 1000555555
+Status: Private</code></pre>
+          <div class="result-card__meta">
+            <span>Limited data</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <aside class="chat-panel glass" id="chat-panel">
+      <div class="chat-panel__header">
+        <h2 class="chat-panel__title">Assistant</h2>
+        <button type="button" class="chat-panel__toggle" aria-expanded="true" aria-controls="chat-messages">
+          <span class="chat-panel__toggle-icon">−</span>
+        </button>
+      </div>
+      <div class="chat-panel__messages" id="chat-messages">
+        <div class="chat-message chat-message--assistant">
+          <span class="chat-message__role">System</span>
+          <p class="chat-message__text">Ready to assist. Enter a query above or ask me about OSINT techniques.</p>
+        </div>
+        <div class="chat-message chat-message--user">
+          <span class="chat-message__role">You</span>
+          <p class="chat-message__text">What prefix range should I try for US accounts?</p>
+        </div>
+        <div class="chat-message chat-message--assistant">
+          <span class="chat-message__role">Assistant</span>
+          <p class="chat-message__text">US accounts typically use prefixes in the 10001xxxxx range. Try narrowing by region for better results.</p>
+        </div>
+      </div>
+      <div class="chat-panel__input-wrap">
+        <label for="chat-input" class="visually-hidden">Ask assistant</label>
+        <input
+          type="text"
+          id="chat-input"
+          class="chat-panel__input"
+          placeholder="Ask about methods, prefixes..."
+          aria-label="Ask assistant"
+        >
+        <button type="button" class="chat-panel__send" aria-label="Send message">↑</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <span class="footer__status">System online</span>
+    <span class="footer__version">v2.0.36</span>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>
