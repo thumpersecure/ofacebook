@@ -29,7 +29,7 @@ The UI renders `actions` as buttons. Action types currently used:
 - `open` (payload: url string)
 - `runSearch` (payload: target path string)
 - `exportCsv` (payload: object, unused)
-- `openModal` (payload: `{ modal: 'pricing' | 'methods', ... }`)
+- `openModal` (payload: `{ modal: 'settings' | 'methods', ... }`)
 
 ## Rule-based assistant API (legacy / library)
 

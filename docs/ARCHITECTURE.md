@@ -10,7 +10,7 @@ This project is a **static, client-side** web application (designed for GitHub P
    - renders prefix library + method combinations
    - wires up search, assistant chat, keyboard shortcuts
    - enables UI subsystems (toasts, modal, command palette, theme)
-   - enforces plan/usage limits (client-side demo gating)
+   - provides an optional settings UI for assistant providers + presets
 
 ## Key modules
 
@@ -28,11 +28,10 @@ This project is a **static, client-side** web application (designed for GitHub P
   - **optional** provider adapters: OpenAI / Anthropic (BYO key, stored locally)
   - emits **actions** (open/copy/export/run search) that the UI renders as buttons
 
-### Commercial scaffolding (client-side demo)
+### Settings
 
-- `src/commercial/plans.js`: plan definitions + feature flags + usage limits
-- `src/commercial/entitlements.js`: current plan + provider settings (stored locally)
-- `src/commercial/usage.js`: per-day counters (stored locally)
+- `src/app/settings.js`: assistant provider selection + optional BYO keys (stored locally)
+- `src/app/presets.js`: saved target + goal presets (stored locally)
 
 ### Domain data
 
@@ -46,8 +45,6 @@ All persistence is browser-local:
 
 - `localStorage` keys:
   - `osint.theme`
-  - `osint.plan`
-  - `osint.usage.v1`
   - `osint.assistant.provider`
   - `osint.openai.key` / `osint.anthropic.key`
 

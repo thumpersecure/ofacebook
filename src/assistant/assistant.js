@@ -2,7 +2,7 @@ import { getMethodCombinations } from '../domain/methods.js';
 import { getPrefixIndex, resolvePrefixHost } from '../domain/prefixes.js';
 import { safeStr } from '../utils/lang.js';
 import { sanitizeForUrl } from '../utils/security.js';
-import { getPlan, hasFeature, getProvider, getOpenAIKey, getAnthropicKey } from '../commercial/entitlements.js';
+import { getProvider, getOpenAIKey, getAnthropicKey } from '../app/settings.js';
 
 function buildHostUrl(host, path) {
   const base = host.startsWith('http') ? host : `https://${host}`;
@@ -67,18 +67,19 @@ function localRespond(text, ctx) {
         text:
           `Commands:\n` +
           `- \`/goal <id>\` (example: \`/goal link-tracking\`)\n` +
-          `- \`/export\` (Pro)\n` +
-          `- \`/bulkopen\` (Pro)\n` +
-          `- \`/plans\`\n`,
+          `- \`/export\`\n` +
+          `- \`/bulkopen\`\n` +
+          `- \`/settings\`\n` +
+          `- \`/help\`\n`,
         actions: [
-          { type: 'openModal', label: 'View plans', payload: { modal: 'pricing' } },
+          { type: 'openModal', label: 'Settings', payload: { modal: 'settings' } },
           { type: 'openModal', label: 'View methods', payload: { modal: 'methods' } },
         ],
       };
     }
 
-    if (cmd === 'plans') {
-      return { text: 'Opening plans & settings.', actions: [{ type: 'openModal', label: 'Plans & Settings', payload: { modal: 'pricing' } }] };
+    if (cmd === 'settings') {
+      return { text: 'Opening settings.', actions: [{ type: 'openModal', label: 'Settings', payload: { modal: 'settings' } }] };
     }
 
     if (cmd === 'goal') {
@@ -140,22 +141,16 @@ function localRespond(text, ctx) {
   const steps = (method?.steps || []).slice(0, 5).map((s) => `- ${s}`).join('\n');
   const prefixLines = prefixes.slice(0, 10).map((h) => `- ${h}${examplePath}`).join('\n');
 
-  const plan = getPlan();
-  const upsell = plan.id === 'free'
-    ? `\n\nTip: Pro unlocks export + bulk-open + more results per search.`
-    : '';
-
   return {
     text:
       `Goal: **${method?.name || 'OSINT'}**\n\n` +
       `Recommended prefixes:\n${prefixLines || '- (none)'}\n\n` +
-      `Workflow:\n${steps || '- Start with mbasic, then escalate to www.'}\n` +
-      upsell,
+      `Workflow:\n${steps || '- Start with mbasic, then escalate to www.'}\n`,
     actions: [
       ...(target ? [{ type: 'runSearch', label: `Search “${target}”`, payload: target }] : []),
       { type: 'setGoal', label: `Set goal: ${method?.id}`, payload: { goalId: method?.id } },
       { type: 'openModal', label: 'View methods', payload: { modal: 'methods', methodId: method?.id } },
-      ...(hasFeature('export') && ctx.lastResults?.length ? [{ type: 'exportCsv', label: 'Export last results', payload: {} }] : []),
+      ...(ctx.lastResults?.length ? [{ type: 'exportCsv', label: 'Export last results', payload: {} }] : []),
     ],
   };
 }
@@ -173,8 +168,7 @@ async function openAIRespond(text, ctx) {
     `User message: ${safeStr(text, 1200)}\n\n` +
     `Known target path (if any): ${ctx.lastTarget || '(none)'}\n` +
     `Recent results count: ${ctx.lastResults?.length || 0}\n` +
-    `Available method combos: ${ctx.methods.map((m) => `${m.id}:${m.name}`).slice(0, 30).join(', ')}\n` +
-    `Plan: ${getPlan().id}\n`;
+    `Available method combos: ${ctx.methods.map((m) => `${m.id}:${m.name}`).slice(0, 30).join(', ')}\n`;
 
   const resp = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -210,8 +204,7 @@ async function anthropicRespond(text, ctx) {
     `User message: ${safeStr(text, 1200)}\n\n` +
     `Known target path (if any): ${ctx.lastTarget || '(none)'}\n` +
     `Recent results count: ${ctx.lastResults?.length || 0}\n` +
-    `Available method combos: ${ctx.methods.map((m) => `${m.id}:${m.name}`).slice(0, 30).join(', ')}\n` +
-    `Plan: ${getPlan().id}\n`;
+    `Available method combos: ${ctx.methods.map((m) => `${m.id}:${m.name}`).slice(0, 30).join(', ')}\n`;
 
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -242,14 +235,6 @@ export function createAssistant() {
   async function respond(text, { lastTarget = '', lastResults = [] } = {}) {
     const ctx = { prefixIndex, methods, lastTarget, lastResults };
     const provider = getProvider();
-    const plan = getPlan();
-
-    if (provider !== 'local' && !plan.features.llmProviders) {
-      return {
-        text: `LLM providers are a Pro feature. Switch provider to Local, or upgrade to Pro.`,
-        actions: [{ type: 'openModal', label: 'View plans', payload: { modal: 'pricing' } }],
-      };
-    }
 
     try {
       if (provider === 'openai') return await openAIRespond(text, ctx);
