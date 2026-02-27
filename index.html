@@ -14,7 +14,7 @@
     - frame-ancestors 'self': Prevents clickjacking
     - All processing is client-side; no sensitive data stored
   -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; form-action 'self'; base-uri 'self'; frame-ancestors 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.openai.com https://api.anthropic.com; form-action 'self'; base-uri 'self'; frame-ancestors 'self';">
   <title>FB OSINT Terminal 2036 | Facebook Prefix Research</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,6 +35,14 @@
         <span class="logo__text">FB OSINT</span>
         <span class="logo__year">2036</span>
       </div>
+      <div class="header__controls">
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle theme (T)">
+          <span class="theme-toggle__icon" aria-hidden="true">◐</span>
+        </button>
+        <button type="button" id="upgrade-btn" class="upgrade-btn" aria-label="View plans and upgrade" title="Plans">
+          <span class="upgrade-btn__text">Upgrade</span>
+        </button>
+      </div>
       <nav class="nav" role="navigation">
         <button type="button" class="nav__btn nav__btn--active" aria-pressed="true" data-panel="0">Search</button>
         <button type="button" class="nav__btn" aria-pressed="false" data-panel="1">Library</button>
@@ -42,6 +50,8 @@
       </nav>
     </div>
   </header>
+
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
   <main class="main" id="main-content">
     <!-- Search Panel -->
@@ -74,17 +84,28 @@
         <div class="method-selector glass">
           <span class="method-selector__label">Quick methods</span>
           <div class="method-selector__chips">
-            <button type="button" class="method-chip" data-query="find profile">Profile</button>
-            <button type="button" class="method-chip" data-query="track links">Links</button>
-            <button type="button" class="method-chip" data-query="business research">Business</button>
-            <button type="button" class="method-chip" data-query="api discovery">API</button>
-            <button type="button" class="method-chip" data-query="locale search">Locale</button>
+            <button type="button" class="method-chip" data-goal="profile-discovery" data-query="find profile">Profile</button>
+            <button type="button" class="method-chip" data-goal="link-tracking" data-query="track links">Links</button>
+            <button type="button" class="method-chip" data-goal="business-intel" data-query="business research">Business</button>
+            <button type="button" class="method-chip" data-goal="api-discovery" data-query="api discovery">API</button>
+            <button type="button" class="method-chip" data-goal="locale-search" data-query="locale search">Locale</button>
           </div>
         </div>
       </section>
 
       <section class="results-section">
         <h2 class="results__title">Query Results</h2>
+        <div class="results-toolbar glass" aria-label="Results actions">
+          <div class="results-toolbar__left">
+            <span class="results-toolbar__label">Goal</span>
+            <span class="results-toolbar__value" id="active-goal">Profile Discovery</span>
+          </div>
+          <div class="results-toolbar__right">
+            <button type="button" class="btn results-toolbar__btn" id="save-preset-btn" aria-label="Save current target as preset">Save preset</button>
+            <button type="button" class="btn results-toolbar__btn" id="export-csv-btn" aria-label="Export last results to CSV">Export CSV</button>
+            <button type="button" class="btn results-toolbar__btn" id="bulk-open-btn" aria-label="Bulk open last results">Bulk open</button>
+          </div>
+        </div>
         <div class="results-grid" id="results-grid">
           <div class="results-placeholder">
             <p>Enter a username or ID above and click Execute. The assistant will recommend the best prefix combinations.</p>
@@ -135,10 +156,38 @@
     </aside>
   </main>
 
+  <div id="command-palette" class="command-palette" role="dialog" aria-modal="true" aria-labelledby="command-palette-title" hidden>
+    <div class="command-palette__backdrop" data-command-close="true"></div>
+    <div class="command-palette__content glass">
+      <div class="command-palette__header">
+        <h2 id="command-palette-title" class="command-palette__title">Command Palette</h2>
+        <span class="command-palette__hint" aria-hidden="true">Esc</span>
+      </div>
+      <label for="command-input" class="visually-hidden">Command search</label>
+      <input
+        type="search"
+        id="command-input"
+        class="command-palette__input"
+        placeholder="Search prefixes, methods, actions..."
+        autocomplete="off"
+        aria-label="Command search"
+      >
+      <div id="command-results" class="command-palette__results" role="listbox" aria-label="Command results"></div>
+    </div>
+  </div>
+
+  <div id="modal-container" class="modal-container" role="dialog" aria-modal="true" hidden>
+    <div class="modal__backdrop" data-modal-close="true"></div>
+    <div class="modal__content glass" role="document">
+      <button type="button" class="modal__close" data-modal-close="true" aria-label="Close modal">×</button>
+      <div id="modal-body" class="modal__body"></div>
+    </div>
+  </div>
+
   <footer class="footer">
     <span class="footer__status">System online</span>
     <span class="footer__version">v2.0.36 | <a href="https://github.com/thumpersecure/thumpersecure/blob/main/facebook-prefix-list.md" target="_blank" rel="noopener noreferrer">thumpersecure</a></span>
   </footer>
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

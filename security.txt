@@ -2,7 +2,8 @@
 # https://securitytxt.org/
 # Place at /.well-known/security.txt or /security.txt for discovery
 
-Contact: mailto:security@example.com
+Contact: https://github.com/thumpersecure/ofacebook/security/advisories/new
+Contact: https://github.com/thumpersecure/ofacebook/issues
 Expires: 2027-12-31T23:59:59.000Z
 Preferred-Languages: en
 

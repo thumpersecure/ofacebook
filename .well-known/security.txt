@@ -1,10 +1,11 @@
 # Security policy for Facebook OSINT Tool
 # https://securitytxt.org/
 
-Contact: mailto:security@example.com
+Contact: https://github.com/thumpersecure/ofacebook/security/advisories/new
+Contact: https://github.com/thumpersecure/ofacebook/issues
 Expires: 2027-12-31T23:59:59.000Z
 Preferred-Languages: en
-Canonical: https://example.github.io/ofacebook/.well-known/security.txt
+Canonical: https://thumpersecure.github.io/ofacebook/.well-known/security.txt
 
 # This is a static client-side web application. No server-side processing.
 # Report vulnerabilities in the HTML/JS/CSS or deployment configuration.
