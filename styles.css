@@ -345,6 +345,46 @@ body {
   font-family: var(--font-display);
 }
 
+.results-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.results-toolbar__left {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.results-toolbar__label {
+  color: var(--fg-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.results-toolbar__value {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+
+.results-toolbar__right {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.results-toolbar__btn {
+  padding: 0.5rem 0.8rem;
+  font-size: 0.85rem;
+}
+
 .results-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -1147,6 +1187,10 @@ body {
   background: linear-gradient(135deg, rgba(0, 229, 255, 0.25), rgba(0, 184, 212, 0.14));
   border-color: rgba(0, 229, 255, 0.35);
   box-shadow: var(--glow-cyan);
+}
+
+.btn--danger {
+  border-color: rgba(255, 0, 170, 0.35);
 }
 
 .btn--danger:hover {

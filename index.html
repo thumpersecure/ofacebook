@@ -95,6 +95,17 @@
 
       <section class="results-section">
         <h2 class="results__title">Query Results</h2>
+        <div class="results-toolbar glass" aria-label="Results actions">
+          <div class="results-toolbar__left">
+            <span class="results-toolbar__label">Goal</span>
+            <span class="results-toolbar__value" id="active-goal">Profile Discovery</span>
+          </div>
+          <div class="results-toolbar__right">
+            <button type="button" class="btn results-toolbar__btn" id="save-preset-btn" aria-label="Save current target as preset">Save preset</button>
+            <button type="button" class="btn results-toolbar__btn" id="export-csv-btn" aria-label="Export last results to CSV">Export CSV</button>
+            <button type="button" class="btn results-toolbar__btn" id="bulk-open-btn" aria-label="Bulk open last results">Bulk open</button>
+          </div>
+        </div>
         <div class="results-grid" id="results-grid">
           <div class="results-placeholder">
             <p>Enter a username or ID above and click Execute. The assistant will recommend the best prefix combinations.</p>

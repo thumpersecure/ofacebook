@@ -11,6 +11,7 @@ import { getPlan, getPlanId, setPlanId, getProvider, setProvider, setOpenAIKey, 
 import { canConsume, increment, getUsage } from '../commercial/usage.js';
 import { getPrefixIndex, matchPrefixHost, resolvePrefixHost } from '../domain/prefixes.js';
 import { getMethodCombinations, getMethodById } from '../domain/methods.js';
+import { getPresets, addPreset, removePreset } from './presets.js';
 
 const MAX_INPUT_LEN = 500;
 const MAX_CHAT_MESSAGES = 80;
@@ -73,6 +74,10 @@ export function initApp() {
   const themeToggle = $('#theme-toggle');
   const upgradeBtn = $('#upgrade-btn');
   const copyBtn = $('#url-copy-btn');
+  const activeGoalLabel = $('#active-goal');
+  const exportCsvBtn = $('#export-csv-btn');
+  const bulkOpenBtn = $('#bulk-open-btn');
+  const savePresetBtn = $('#save-preset-btn');
 
   /** @type {{ goalId: string, lastTarget: string, lastResults: Array<{host: string, url: string, category: string}> }} */
   const state = {
@@ -85,6 +90,10 @@ export function initApp() {
     const m = getMethodById(goalId);
     state.goalId = m ? goalId : 'profile-discovery';
     $$('.method-chip').forEach((c) => c.classList.toggle('method-chip--active', c.getAttribute('data-goal') === state.goalId));
+    if (activeGoalLabel) {
+      const method = getMethodById(state.goalId) || methods[0];
+      activeGoalLabel.textContent = method?.name || 'Profile Discovery';
+    }
   }
 
   function addAssistantMessage(role, text, actions = []) {
@@ -121,6 +130,7 @@ export function initApp() {
   function openPricingModal() {
     const plan = getPlan();
     const usage = getUsage();
+    const presets = getPresets();
 
     const plans = ['free', 'pro', 'enterprise'].map((id) => {
       const p = id === 'free' ? 'Free' : id === 'pro' ? 'Pro' : 'Enterprise';
@@ -172,6 +182,22 @@ export function initApp() {
           <button type="button" class="btn" id="close-settings">Close</button>
         </div>
       </div>
+
+      <div class="modal__section">
+        <h3>Presets</h3>
+        <p class="modal__subtitle">Save frequently-used targets + goals. Pro feature.</p>
+        <div class="modal__subtitle">${presets.length ? `${presets.length} saved` : 'No presets saved yet.'}</div>
+        <div class="modal__actions" id="preset-actions">
+          ${presets
+            .slice(0, 6)
+            .map(
+              (p) =>
+                `<button type="button" class="btn" data-preset-apply="${escapeHtml(p.id)}">Apply: ${escapeHtml(p.name)}</button>` +
+                `<button type="button" class="btn btn--danger" data-preset-remove="${escapeHtml(p.id)}">Delete</button>`
+            )
+            .join('')}
+        </div>
+      </div>
     `);
 
     const planSelect = $('#plan-select', document.getElementById('modal-body'));
@@ -192,6 +218,73 @@ export function initApp() {
       modal.close();
     });
     closeBtn?.addEventListener('click', () => modal.close());
+
+    const presetActions = $('#preset-actions', document.getElementById('modal-body'));
+    presetActions?.querySelectorAll('[data-preset-apply]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-preset-apply') || '';
+        const p = getPresets().find((x) => x.id === id);
+        if (!p) return;
+        setGoal(p.goalId);
+        if (searchInput) searchInput.value = p.target;
+        updateUrlPreview();
+        toasts.show(`Applied preset: ${p.name}`, 'success');
+        modal.close();
+      });
+    });
+    presetActions?.querySelectorAll('[data-preset-remove]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-preset-remove') || '';
+        removePreset(id);
+        toasts.show('Preset deleted', 'info');
+        modal.close();
+        openPricingModal();
+      });
+    });
+  }
+
+  function openSavePresetModal() {
+    const target = state.lastTarget || searchInput?.value?.trim() || '';
+    if (!target) {
+      toasts.show('Nothing to save yet — run a search first.', 'info');
+      return;
+    }
+    if (!hasFeature('savedPresets')) {
+      toasts.show('Presets are a Pro feature.', 'info');
+      openPricingModal();
+      return;
+    }
+
+    const method = getMethodById(state.goalId) || methods[0];
+    modal.open(`
+      <h2 class="modal__title">Save preset</h2>
+      <p class="modal__subtitle">Store a target + goal for one-click reuse.</p>
+      <div class="modal__field">
+        <label for="preset-name">Name</label>
+        <input id="preset-name" type="text" autocomplete="off" value="${escapeHtml(target)}">
+      </div>
+      <div class="modal__field">
+        <label>Target</label>
+        <div class="modal__subtitle"><code>${escapeHtml(target)}</code></div>
+      </div>
+      <div class="modal__field">
+        <label>Goal</label>
+        <div class="modal__subtitle"><code>${escapeHtml(method?.name || '')}</code></div>
+      </div>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--primary" id="preset-save">Save</button>
+        <button type="button" class="btn" data-modal-close="true">Cancel</button>
+      </div>
+    `);
+
+    const nameInput = $('#preset-name', document.getElementById('modal-body'));
+    const save = $('#preset-save', document.getElementById('modal-body'));
+    save?.addEventListener('click', () => {
+      const name = nameInput?.value || target;
+      addPreset({ name, target, goalId: state.goalId });
+      toasts.show('Preset saved', 'success');
+      modal.close();
+    });
   }
 
   function updateUrlPreview() {
@@ -444,6 +537,19 @@ export function initApp() {
         run: () => { setGoal(m.id); toasts.show(`Goal set: ${m.name}`, 'info'); },
       }));
 
+      const presetItems = getPresets().map((p) => ({
+        id: `preset:${p.id}`,
+        label: `Preset: ${p.name}`,
+        icon: '⟠',
+        hint: p.goalId,
+        run: () => {
+          setGoal(p.goalId);
+          if (searchInput) searchInput.value = p.target;
+          updateUrlPreview();
+          toasts.show(`Applied preset: ${p.name}`, 'success');
+        },
+      }));
+
       const prefixItems = prefixIndex.all.slice(0, 200).map((p) => ({
         id: `prefix:${p.host}`,
         label: `Open ${p.host}`,
@@ -452,7 +558,7 @@ export function initApp() {
         run: () => window.open(buildHostUrl(p.host, state.lastTarget ? `/${state.lastTarget}` : ''), '_blank', 'noopener,noreferrer'),
       }));
 
-      const items = [...base, ...methodItems, ...prefixItems];
+      const items = [...base, ...methodItems, ...presetItems, ...prefixItems];
       return items.filter((it) => !q || it.label.toLowerCase().includes(q) || (it.hint || '').toLowerCase().includes(q)).slice(0, 24);
     },
   });
@@ -528,6 +634,9 @@ export function initApp() {
       toasts.show(`Theme: ${t}`, 'info');
     });
     on(upgradeBtn, 'click', openPricingModal);
+    on(exportCsvBtn, 'click', exportLastResultsCsv);
+    on(bulkOpenBtn, 'click', bulkOpenLastResults);
+    on(savePresetBtn, 'click', openSavePresetModal);
 
     on(document, 'keydown', (e) => {
       if (e.key.toLowerCase() === 't' && (e.target === document.body)) {
