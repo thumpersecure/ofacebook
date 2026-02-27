@@ -66,6 +66,7 @@
               <span class="search-box__submit-text">Execute</span>
               <span class="search-box__submit-icon">▶</span>
             </button>
+            <button type="button" id="url-copy-btn" class="search-box__copy" aria-label="Copy URL">Copy</button>
             <output id="url-output" class="search-box__url-preview" for="search-input">https://www.facebook.com/</output>
           </div>
         </div>
@@ -97,6 +98,8 @@
       <div class="library-header glass">
         <h2>Prefix Library</h2>
         <p>Subdomains from <a href="https://github.com/thumpersecure/thumpersecure/blob/main/facebook-prefix-list.md" target="_blank" rel="noopener noreferrer">thumpersecure</a>. Click to open with your search path.</p>
+        <label for="library-filter" class="visually-hidden">Filter prefixes</label>
+        <input type="search" id="library-filter" class="library-filter" placeholder="Filter by domain, category..." autocomplete="off" aria-label="Filter prefixes">
       </div>
       <div class="prefix-grid" id="prefix-list"></div>
     </section>

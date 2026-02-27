@@ -3,13 +3,26 @@
  * Futuristic OSINT assistant using thumpersecure prefix list
  *
  * SECURITY: Client-side only, input sanitization, no eval, CSP compliant
+ * PERFORMANCE: Debounced input, DocumentFragment batching, O(1) prefix lookup
  */
 (function () {
   'use strict';
 
+  const MAX_INPUT_LEN = 500;
+  const MAX_CHAT_MESSAGES = 50;
+  const DEBOUNCE_MS = 150;
+
   // ==========================================================================
-  // SECURITY HELPERS
+  // UTILITIES
   // ==========================================================================
+  function debounce(fn, ms) {
+    let t;
+    return function (...args) {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), ms);
+    };
+  }
+
   function escapeHtml(str) {
     if (typeof str !== 'string') return '';
     const div = document.createElement('div');
@@ -19,12 +32,12 @@
 
   function sanitizeForUrl(str) {
     if (typeof str !== 'string') return '';
-    return str.replace(/[^a-zA-Z0-9._\-/]/g, '');
+    return str.slice(0, MAX_INPUT_LEN).replace(/[^a-zA-Z0-9._\-/]/g, '');
   }
 
-  function setText(el, text) {
-    if (!el) return;
-    el.textContent = String(text ?? '');
+  function safeStr(val, maxLen) {
+    const s = String(val ?? '');
+    return maxLen ? s.slice(0, maxLen) : s;
   }
 
   // ==========================================================================
@@ -152,9 +165,26 @@
   }
 
   function buildUrl(subdomain, path) {
-    const base = subdomain.startsWith('http') ? subdomain : 'https://' + subdomain;
-    const p = path ? (path.startsWith('/') ? path : '/' + path) : '';
-    return base + p;
+    if (!subdomain || typeof subdomain !== 'string') return '';
+    var base = subdomain.startsWith('http') ? subdomain : 'https://' + subdomain;
+    var p = path ? (path.startsWith('/') ? path : '/' + path) : '';
+    var url = base + p;
+    return url.length > 2048 ? base : url;
+  }
+
+  function matchPrefix(p, id) {
+    if (!p || !id) return false;
+    return p.s === id || p.s === id + '.facebook.com' || p.s === id + '.fb.com' || p.s.startsWith(id + '.');
+  }
+
+  function resolvePrefixDomains(ids) {
+    var out = [];
+    for (var i = 0; i < (ids && ids.length) || 0; i++) {
+      var id = ids[i];
+      var found = PREFIX_DATA.find(function (x) { return matchPrefix(x, id); });
+      out.push(found ? found.s : id);
+    }
+    return out;
   }
 
   // ==========================================================================
@@ -193,145 +223,241 @@
   }
 
   function renderComboCard(c) {
-    const card = document.createElement('div');
+    if (!c || !c.name) return null;
+    var card = document.createElement('div');
     card.className = 'combo-card';
-    const prefixList = c.prefixes.map((id) => {
-      const p = PREFIX_DATA.find((x) => x.s.startsWith(id + '.') || x.s === id + '.facebook.com');
-      return p ? p.s : id;
-    }).join(', ');
-    card.innerHTML = `
-      <h4 class="combo-card__name">${escapeHtml(c.name)}</h4>
-      <p class="combo-card__tip">${escapeHtml(c.tip)}</p>
-      <code class="combo-card__prefixes">${escapeHtml(prefixList)}</code>
-    `;
+    var domains = resolvePrefixDomains(c.prefixes).join(', ');
+    card.innerHTML = '<h4 class="combo-card__name">' + escapeHtml(c.name) + '</h4>' +
+      '<p class="combo-card__tip">' + escapeHtml(c.tip) + '</p>' +
+      '<code class="combo-card__prefixes">' + escapeHtml(domains) + '</code>';
     return card;
   }
 
   function executeSearch() {
-    const raw = searchInput?.value?.trim() || '';
+    var raw = searchInput && searchInput.value ? searchInput.value.trim() : '';
     if (!raw || !resultsGrid) return;
 
-    const safe = sanitizeForUrl(raw);
+    var safe = sanitizeForUrl(raw);
     if (!safe) return;
 
-    const rec = getRecommendation(raw);
-    resultsGrid.innerHTML = '';
+    var rec = getRecommendation(raw);
+    if (!rec || !rec.combo) return;
 
-    function matchPrefix(p, id) {
-      return p.s === id || p.s === id + '.facebook.com' || p.s === id + '.fb.com' || p.s.startsWith(id + '.');
-    }
-    let primaryPrefixes = PREFIX_DATA.filter((p) =>
-      rec.combo.prefixes.some((pre) => matchPrefix(p, pre))
-    ).slice(0, 8);
+    var primaryPrefixes = PREFIX_DATA.filter(function (p) {
+      return rec.combo.prefixes.some(function (pre) { return matchPrefix(p, pre); });
+    }).slice(0, 8);
     if (primaryPrefixes.length === 0) {
-      primaryPrefixes = PREFIX_DATA.filter((p) => ['mbasic', 'm', 'www'].some((pre) => matchPrefix(p, pre))).slice(0, 4);
+      primaryPrefixes = PREFIX_DATA.filter(function (p) {
+        return ['mbasic', 'm', 'www'].some(function (pre) { return matchPrefix(p, pre); });
+      }).slice(0, 4);
     }
-    primaryPrefixes.forEach((p) => {
-      const url = buildUrl(p.s, safe);
-      const card = document.createElement('article');
-      card.className = 'result-card glass';
-      card.innerHTML = `
-        <div class="result-card__header">
-          <span class="result-card__type">${escapeHtml(p.c)}</span>
-          <span class="result-card__confidence">${escapeHtml(rec.intent)}</span>
-        </div>
-        <h3 class="result-card__title">${escapeHtml(p.s)}</h3>
-        <pre class="result-card__data"><code>${escapeHtml(url)}</code></pre>
-        <div class="result-card__meta">
-          <a href="${url}" target="_blank" rel="noopener noreferrer" class="result-card__link">Open in new tab</a>
-        </div>
-      `;
-      resultsGrid.appendChild(card);
-    });
 
-    resultsTitle.textContent = `Results for "${escapeHtml(raw)}" — ${rec.combo.name}`;
-    addAssistantMessage('system', `Recommended: ${rec.combo.name}. ${rec.tips.join(' ')}`);
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < primaryPrefixes.length; i++) {
+      var p = primaryPrefixes[i];
+      var url = buildUrl(p.s, safe);
+      if (!url) continue;
+      var card = document.createElement('article');
+      card.className = 'result-card glass';
+      card.innerHTML = '<div class="result-card__header">' +
+        '<span class="result-card__type">' + escapeHtml(p.c) + '</span>' +
+        '<span class="result-card__confidence">' + escapeHtml(rec.intent) + '</span></div>' +
+        '<h3 class="result-card__title">' + escapeHtml(p.s) + '</h3>' +
+        '<pre class="result-card__data"><code>' + escapeHtml(url) + '</code></pre>' +
+        '<div class="result-card__meta">' +
+        '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="result-card__link">Open</a>' +
+        '<button type="button" class="result-card__copy" aria-label="Copy URL" data-url="' + escapeHtml(url) + '">Copy</button>' +
+        '</div>';
+      frag.appendChild(card);
+    }
+    resultsGrid.innerHTML = '';
+    resultsGrid.appendChild(frag);
+
+    if (resultsTitle) resultsTitle.textContent = 'Results for "' + escapeHtml(raw.slice(0, 80)) + '" — ' + rec.combo.name;
+    addAssistantMessage('system', 'Recommended: ' + rec.combo.name + '. ' + (rec.tips ? rec.tips.join(' ') : rec.combo.tip));
+
+    resultsGrid.querySelectorAll('.result-card__copy').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var u = btn.getAttribute('data-url');
+        if (u && navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(u).then(function () {
+            btn.textContent = 'Copied';
+            setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
+          }).catch(function () {});
+        }
+      });
+    });
   }
 
   function addAssistantMessage(role, text) {
     if (!chatMessages) return;
-    const div = document.createElement('div');
+    var safeText = escapeHtml(safeStr(text, 2000));
+    var div = document.createElement('div');
     div.className = 'chat-message chat-message--' + (role === 'user' ? 'user' : 'assistant');
-    div.innerHTML = `
-      <span class="chat-message__role">${role === 'user' ? 'You' : 'Assistant'}</span>
-      <p class="chat-message__text">${escapeHtml(text)}</p>
-    `;
+    div.innerHTML = '<span class="chat-message__role">' + (role === 'user' ? 'You' : 'Assistant') + '</span>' +
+      '<p class="chat-message__text">' + safeText + '</p>';
     chatMessages.appendChild(div);
+    var children = chatMessages.children;
+    while (children.length > MAX_CHAT_MESSAGES) {
+      chatMessages.removeChild(children[0]);
+    }
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
   function sendChatMessage() {
-    const raw = chatInput?.value?.trim() || '';
+    var raw = chatInput && chatInput.value ? chatInput.value.trim() : '';
     if (!raw) return;
 
     addAssistantMessage('user', raw);
     chatInput.value = '';
 
-    const rec = getRecommendation(raw);
-    const response = `For "${raw}", I recommend **${rec.combo.name}**. ${rec.tips.join(' ')} Try: ${rec.combo.prefixes.map((id) => {
-      const p = PREFIX_DATA.find((x) => x.s.startsWith(id + '.') || x.s === id + '.facebook.com');
-      return p ? p.s : id;
-    }).join(', ')}.`;
+    var rec = getRecommendation(raw);
+    if (!rec || !rec.combo) return;
+    var domains = resolvePrefixDomains(rec.combo.prefixes).join(', ');
+    var response = 'For "' + safeStr(raw, 100) + '", I recommend ' + rec.combo.name + '. ' +
+      (rec.tips ? rec.tips.join(' ') : rec.combo.tip) + ' Try: ' + domains + '.';
     addAssistantMessage('assistant', response);
   }
 
   function updateUrlPreview() {
     if (!urlOutput || !searchInput) return;
-    const path = searchInput.value.trim();
-    const subdomain = $('.prefix-card--selected .prefix-card__domain')?.textContent || 'www.facebook.com';
+    var path = searchInput.value.trim().slice(0, MAX_INPUT_LEN);
+    var subdomain = 'www.facebook.com';
+    var sel = document.querySelector('.prefix-card--selected .prefix-card__domain');
+    if (sel && sel.textContent) subdomain = sel.textContent;
     urlOutput.textContent = buildUrl(subdomain, path ? '/' + sanitizeForUrl(path) : '');
+  }
+
+  var debouncedUpdateUrl = debounce(updateUrlPreview, DEBOUNCE_MS);
+
+  function copyUrlToClipboard() {
+    if (!urlOutput || !urlOutput.textContent) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(urlOutput.textContent).catch(function () {});
+    }
+  }
+
+  function filterPrefixLibrary(query) {
+    if (!prefixList) return;
+    var q = (query || '').toLowerCase().trim();
+    var cards = prefixList.querySelectorAll('.prefix-card');
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      var domainEl = card.querySelector('.prefix-card__domain');
+      var purposeEl = card.querySelector('.prefix-card__purpose');
+      var catEl = card.querySelector('.prefix-card__cat');
+      var domain = domainEl ? domainEl.textContent : '';
+      var purpose = purposeEl ? purposeEl.textContent : '';
+      var cat = catEl ? catEl.textContent : '';
+      var match = !q || domain.toLowerCase().includes(q) || purpose.toLowerCase().includes(q) || cat.toLowerCase().includes(q);
+      card.style.display = match ? '' : 'none';
+    }
   }
 
   // ==========================================================================
   // INIT
   // ==========================================================================
+  function renderPrefixLibrary() {
+    if (!prefixList) return;
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < PREFIX_DATA.length; i++) {
+      var card = renderPrefixCard(PREFIX_DATA[i]);
+      if (card) frag.appendChild(card);
+    }
+    prefixList.innerHTML = '';
+    prefixList.appendChild(frag);
+  }
+
+  function renderComboLibrary() {
+    if (!comboList) return;
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < METHOD_COMBOS.length; i++) {
+      var card = renderComboCard(METHOD_COMBOS[i]);
+      if (card) frag.appendChild(card);
+    }
+    comboList.innerHTML = '';
+    comboList.appendChild(frag);
+  }
+
   function init() {
-    if (prefixList) {
-      PREFIX_DATA.forEach((p) => prefixList.appendChild(renderPrefixCard(p)));
+    try {
+      renderPrefixLibrary();
+      renderComboLibrary();
+
+      if (searchSubmit) searchSubmit.addEventListener('click', executeSearch);
+      if (searchInput) {
+        searchInput.setAttribute('maxlength', MAX_INPUT_LEN);
+        searchInput.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') executeSearch();
+          if (e.key === 'Escape') { searchInput.value = ''; updateUrlPreview(); searchInput.blur(); }
+        });
+        searchInput.addEventListener('input', debouncedUpdateUrl);
+      }
+      if (chatSend) chatSend.addEventListener('click', sendChatMessage);
+      if (chatInput) {
+        chatInput.setAttribute('maxlength', MAX_INPUT_LEN);
+        chatInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') sendChatMessage(); });
+      }
+
+      var navBtns = $$('.nav__btn');
+      for (var i = 0; i < navBtns.length; i++) {
+        (function (idx) {
+          navBtns[idx].addEventListener('click', function () {
+            for (var j = 0; j < navBtns.length; j++) {
+              navBtns[j].setAttribute('aria-pressed', 'false');
+              navBtns[j].classList.remove('nav__btn--active');
+            }
+            navBtns[idx].setAttribute('aria-pressed', 'true');
+            navBtns[idx].classList.add('nav__btn--active');
+            var panels = $$('.main-panel');
+            for (var k = 0; k < panels.length; k++) panels[k].classList.remove('main-panel--active');
+            if (panels[idx]) panels[idx].classList.add('main-panel--active');
+          });
+        })(i);
+      }
+
+      var chips = $$('.method-chip');
+      for (var c = 0; c < chips.length; c++) {
+        chips[c].addEventListener('click', function () {
+          var q = this.getAttribute('data-query') || '';
+          addAssistantMessage('user', q);
+          var rec = getRecommendation(q);
+          if (rec && rec.combo) {
+            addAssistantMessage('assistant', rec.combo.name + ': ' + (rec.tips ? rec.tips.join(' ') : rec.combo.tip) + ' Prefixes: ' + resolvePrefixDomains(rec.combo.prefixes).join(', ') + '.');
+          }
+        });
+      }
+
+      var chatToggle = $('.chat-panel__toggle');
+      if (chatToggle) {
+        chatToggle.addEventListener('click', function () {
+          var expanded = chatToggle.getAttribute('aria-expanded') === 'true';
+          chatToggle.setAttribute('aria-expanded', !expanded);
+          var icon = chatToggle.querySelector('.chat-panel__toggle-icon');
+          if (icon) icon.textContent = expanded ? '+' : '−';
+          var panel = $('#chat-panel');
+          if (panel) panel.classList.toggle('chat-panel--collapsed', expanded);
+        });
+      }
+
+      var copyBtn = $('#url-copy-btn');
+      if (copyBtn) copyBtn.addEventListener('click', copyUrlToClipboard);
+
+      var libraryFilter = $('#library-filter');
+      if (libraryFilter) {
+        libraryFilter.setAttribute('maxlength', 100);
+        libraryFilter.addEventListener('input', debounce(function () { filterPrefixLibrary(libraryFilter.value); }, DEBOUNCE_MS));
+      }
+
+      updateUrlPreview();
+      addAssistantMessage('system', 'Facebook OSINT Assistant ready. Enter a username/ID to search, or ask about methods (e.g. "find profile", "track links", "business research").');
+    } catch (err) {
+      if (typeof console !== 'undefined' && console.error) console.error('OSINT init error:', err);
+      var main = document.getElementById('main-content');
+      if (main) main.innerHTML = '<p class="error-fallback">Unable to load. Please refresh the page.</p>';
     }
-    if (comboList) {
-      METHOD_COMBOS.forEach((c) => comboList.appendChild(renderComboCard(c)));
-    }
-
-    if (searchSubmit) searchSubmit.addEventListener('click', executeSearch);
-    if (searchInput) {
-      searchInput.addEventListener('keydown', (e) => e.key === 'Enter' && executeSearch());
-      searchInput.addEventListener('input', updateUrlPreview);
-    }
-    if (chatSend) chatSend.addEventListener('click', sendChatMessage);
-    if (chatInput) chatInput.addEventListener('keydown', (e) => e.key === 'Enter' && sendChatMessage());
-
-    $$('.nav__btn').forEach((btn, i) => {
-      btn.addEventListener('click', () => {
-        $$('.nav__btn').forEach((b) => { b.setAttribute('aria-pressed', 'false'); b.classList.remove('nav__btn--active'); });
-        btn.setAttribute('aria-pressed', 'true');
-        btn.classList.add('nav__btn--active');
-        const panels = $$('.main-panel');
-        panels.forEach((p) => p.classList.remove('main-panel--active'));
-        if (panels[i]) panels[i].classList.add('main-panel--active');
-      });
-    });
-
-    $$('.method-chip').forEach((chip) => {
-      chip.addEventListener('click', () => {
-        const query = chip.getAttribute('data-query') || '';
-        addAssistantMessage('user', query);
-        const rec = getRecommendation(query);
-        addAssistantMessage('assistant', `${rec.combo.name}: ${rec.tips.join(' ')} Prefixes: ${rec.combo.prefixes.join(', ')}.`);
-      });
-    });
-
-    const chatToggle = $('.chat-panel__toggle');
-    if (chatToggle) {
-      chatToggle.addEventListener('click', () => {
-        const expanded = chatToggle.getAttribute('aria-expanded') === 'true';
-        chatToggle.setAttribute('aria-expanded', !expanded);
-        chatToggle.querySelector('.chat-panel__toggle-icon').textContent = expanded ? '+' : '−';
-        $('#chat-panel')?.classList.toggle('chat-panel--collapsed', expanded);
-      });
-    }
-
-    addAssistantMessage('system', 'Facebook OSINT Assistant ready. Enter a username/ID to search, or ask about methods (e.g. "find profile", "track links", "business research").');
   }
 
   if (document.readyState === 'loading') {

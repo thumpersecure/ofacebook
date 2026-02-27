@@ -177,10 +177,18 @@ body {
   grid-column: 1;
   flex-direction: column;
   gap: 1.5rem;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
 }
 
 .main-panel--active {
   display: flex;
+}
+
+.error-fallback {
+  padding: 2rem;
+  text-align: center;
+  color: var(--fg-muted);
 }
 
 .search-section { width: 100%; }
@@ -259,6 +267,23 @@ body {
 .search-box__submit:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 20px rgba(0, 229, 255, 0.3);
+}
+
+.search-box__copy {
+  padding: 0.5rem 0.9rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.search-box__copy:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .search-box__url-preview {
@@ -383,6 +408,10 @@ body {
   margin-top: 0.75rem;
   font-size: 0.8rem;
   color: var(--fg-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 .result-card__link {
@@ -392,6 +421,21 @@ body {
 
 .result-card__link:hover {
   text-decoration: underline;
+}
+
+.result-card__copy {
+  padding: 0.25rem 0.5rem;
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.result-card__copy:hover {
+  background: rgba(0, 229, 255, 0.2);
 }
 
 /* Prefix library */
@@ -409,9 +453,26 @@ body {
 
 .library-header p,
 .methods-header p {
-  margin: 0;
+  margin: 0 0 0.75rem 0;
   font-size: 0.9rem;
   color: var(--fg-muted);
+}
+
+.library-filter {
+  width: 100%;
+  max-width: 320px;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.library-filter:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .library-header a,
@@ -423,6 +484,7 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 1rem;
+  contain: layout style;
 }
 
 .prefix-card {
