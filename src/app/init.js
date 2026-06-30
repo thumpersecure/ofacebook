@@ -28,14 +28,14 @@ function renderMarkdownLite(text) {
   // CSP-friendly, tiny: bold + inline code + newlines.
   const t = escapeHtml(String(text ?? ''));
   return t
-    .replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\\n/g, '<br>');
+    .replace(/\n/g, '<br>');
 }
 
 function toCsv(rows) {
   const esc = (v) => `"${String(v ?? '').replaceAll('"', '""')}"`;
-  return rows.map((r) => r.map(esc).join(',')).join('\\n');
+  return rows.map((r) => r.map(esc).join(',')).join('\n');
 }
 
 function downloadText(filename, content) {
@@ -288,7 +288,7 @@ export function initApp() {
         <span class="prefix-card__domain">${escapeHtml(p.subdomain)}</span>
         <span class="prefix-card__cat">${escapeHtml(p.category)}</span>
         <span class="prefix-card__purpose">${escapeHtml(p.purpose)}</span>
-        <a href="${escapeHtml(buildPrefixUrl(p.subdomain))}" target="_blank" rel="noopener noreferrer" class="prefix-card__link">Open</a>
+        <a href="${buildPrefixUrl(p.subdomain)}" target="_blank" rel="noopener noreferrer" class="prefix-card__link">Open</a>
       `;
       card.querySelector('.prefix-card__link')?.addEventListener('click', (e) => e.stopPropagation());
       card.addEventListener('click', () => {
@@ -370,8 +370,8 @@ export function initApp() {
         <h3 class="result-card__title">${escapeHtml(host)}</h3>
         <pre class="result-card__data"><code>${escapeHtml(url)}</code></pre>
         <div class="result-card__meta">
-          <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="result-card__link">Open</a>
-          <button type="button" class="result-card__copy" aria-label="Copy URL" data-url="${escapeHtml(url)}">Copy</button>
+          <a href="${url}" target="_blank" rel="noopener noreferrer" class="result-card__link">Open</a>
+          <button type="button" class="result-card__copy" aria-label="Copy URL" data-url="${url}">Copy</button>
         </div>
       `;
       frag.appendChild(card);
@@ -381,7 +381,7 @@ export function initApp() {
     resultsGrid.appendChild(frag);
     state.lastResults = newResults;
 
-    if (resultsTitle) resultsTitle.textContent = `Results for "${escapeHtml(raw.slice(0, 80))}" — ${escapeHtml(goal.name)}`;
+    if (resultsTitle) resultsTitle.textContent = `Results for "${raw.slice(0, 80)}" — ${goal.name}`;
     toasts.show(`Generated ${newResults.length} URLs`, 'success');
 
     resultsGrid.querySelectorAll('.result-card__copy').forEach((btn) => {
