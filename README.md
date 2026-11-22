@@ -67,3 +67,5 @@ Then open `http://localhost:5173`.
 ## License
 
 MIT. See `LICENSE`.
+
+Made by [justinhorn.pro](https://justinhorn.pro)
