@@ -504,6 +504,13 @@ const SUBDOMAINS = {
   },
 
   // --- ADDITIONAL TWO-LETTER / COMMON ---
+  'zh-cn': {
+    subdomain: 'zh-cn.facebook.com',
+    category: 'locale',
+    purpose: 'Chinese (Simplified) locale',
+    osintUseCase: 'Chinese content, regional search',
+    recommendedMethods: ['locale-search', 'profile-lookup'],
+  },
   zh: {
     subdomain: 'zh-cn.facebook.com',
     category: 'locale',

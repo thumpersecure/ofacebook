@@ -1,36 +1,111 @@
 const PROVIDER_KEY = 'osint.assistant.provider';
 const OPENAI_KEY = 'osint.openai.key';
 const ANTHROPIC_KEY = 'osint.anthropic.key';
+const STORAGE_PROBE_KEY = '__osint_storage_probe__';
+
+/** @type {Map<string, string>} */
+const memoryStore = new Map();
+
+function readItem(key) {
+  if (memoryStore.has(key)) return memoryStore.get(key) ?? null;
+  try {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem(key);
+    }
+  } catch {
+    // Storage unavailable or blocked
+  }
+  return null;
+}
+
+function writeItem(key, value) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(key, value);
+      memoryStore.delete(key);
+      return true;
+    }
+  } catch {
+    // Storage unavailable or quota exceeded; fall back to memory
+  }
+  memoryStore.set(key, value);
+  return false;
+}
+
+function removeItem(key) {
+  memoryStore.delete(key);
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(key);
+      return true;
+    }
+  } catch {
+    // Storage unavailable or blocked
+  }
+  return false;
+}
+
+export function isStorageAvailable() {
+  try {
+    if (typeof localStorage === 'undefined') return false;
+    localStorage.setItem(STORAGE_PROBE_KEY, '1');
+    const v = localStorage.getItem(STORAGE_PROBE_KEY);
+    localStorage.removeItem(STORAGE_PROBE_KEY);
+    return v === '1';
+  } catch {
+    return false;
+  }
+}
 
 export function getProvider() {
-  return localStorage.getItem(PROVIDER_KEY) || 'local';
+  const val = readItem(PROVIDER_KEY);
+  return val === 'openai' || val === 'anthropic' ? val : 'local';
 }
 
 export function setProvider(providerId) {
   const p = providerId === 'openai' || providerId === 'anthropic' ? providerId : 'local';
-  localStorage.setItem(PROVIDER_KEY, p);
+  writeItem(PROVIDER_KEY, p);
   return p;
 }
 
 export function getOpenAIKey() {
-  return localStorage.getItem(OPENAI_KEY) || '';
+  return readItem(OPENAI_KEY) || '';
 }
 
 export function setOpenAIKey(key) {
-  localStorage.setItem(OPENAI_KEY, String(key || '').trim());
+  const clean = String(key ?? '').trim();
+  if (!clean) {
+    removeItem(OPENAI_KEY);
+    return '';
+  }
+  writeItem(OPENAI_KEY, clean);
+  return clean;
+}
+
+export function hasOpenAIKey() {
+  return Boolean(getOpenAIKey());
 }
 
 export function getAnthropicKey() {
-  return localStorage.getItem(ANTHROPIC_KEY) || '';
+  return readItem(ANTHROPIC_KEY) || '';
 }
 
 export function setAnthropicKey(key) {
-  localStorage.setItem(ANTHROPIC_KEY, String(key || '').trim());
+  const clean = String(key ?? '').trim();
+  if (!clean) {
+    removeItem(ANTHROPIC_KEY);
+    return '';
+  }
+  writeItem(ANTHROPIC_KEY, clean);
+  return clean;
+}
+
+export function hasAnthropicKey() {
+  return Boolean(getAnthropicKey());
 }
 
 export function clearLocalSettings() {
-  localStorage.removeItem(PROVIDER_KEY);
-  localStorage.removeItem(OPENAI_KEY);
-  localStorage.removeItem(ANTHROPIC_KEY);
+  removeItem(PROVIDER_KEY);
+  removeItem(OPENAI_KEY);
+  removeItem(ANTHROPIC_KEY);
 }
-

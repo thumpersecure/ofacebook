@@ -4,6 +4,8 @@
  * @module osint-assistant
  */
 
+import { buildSafeHostUrl } from './utils/security.js';
+
 // --- PREFIX DEFINITIONS ---
 
 const PREFIXES = {
@@ -116,7 +118,7 @@ const INTENT_KEYWORDS = {
     'structured data', 'developer intel', 'api query',
   ],
   locale_search: [
-    'locale', 'language', 'region', 'country', 'zh-cn', 'ar',
+    'locale', 'language', 'region', 'country', 'zh-cn', 'ar-ar', 'ar', 'arabic',
     'localized', 'regional search', 'language-specific',
   ],
 };
@@ -253,6 +255,11 @@ const LOCALE_PREFIXES = [
   { code: 'en-gb', name: 'English (UK)' },
 ];
 
+function matchesKeywordBoundary(text, kw) {
+  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?<![a-z0-9])${escaped}(?![a-z0-9])`, 'i').test(text);
+}
+
 /**
  * Detect intent from user query (natural language or selected prefix).
  * @param {string} query - User query or prefix selection
@@ -270,9 +277,9 @@ function detectIntent(query) {
     return prefixData?.useCases?.[0] ?? 'profile_discovery';
   }
 
-  // Keyword-based intent detection
+  // Keyword-based intent detection (word-boundary safe)
   for (const [intent, keywords] of Object.entries(INTENT_KEYWORDS)) {
-    if (keywords.some((kw) => q.includes(kw))) return intent;
+    if (keywords.some((kw) => matchesKeywordBoundary(q, kw))) return intent;
   }
 
   return null;
@@ -365,9 +372,7 @@ function getContextualTips(intentOrPrefix) {
 function buildUrl(prefixId, path = '') {
   const prefix = PREFIXES[prefixId];
   if (!prefix) return '';
-  const base = `https://${prefix.domain}`;
-  const p = path.startsWith('/') ? path : `/${path}`;
-  return base + (path ? p : '');
+  return buildSafeHostUrl(prefix.domain, path);
 }
 
 /**

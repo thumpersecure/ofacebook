@@ -7,6 +7,8 @@
  * method combinations, and workflow recommendations.
  */
 
+import { buildSafeHostUrl } from './utils/security.js';
+
 // =============================================================================
 // THUMPERSECURE PREFIX DATA - Exact subdomains from source
 // =============================================================================
@@ -35,6 +37,7 @@ const THUMPERSECURE_PREFIXES = [
   { subdomain: 'ai.facebook.com', status: 'active', purpose: 'AI / research portal', category: 'corporate' },
   // Mobile & Alternative Access
   { subdomain: 'mbasic.facebook.com', status: 'active', purpose: 'Ultra-lightweight text-only mobile', category: 'mobile' },
+  { subdomain: 'mtouch.facebook.com', status: 'active', purpose: 'Mobile touch interface (graph search workarounds)', category: 'mobile' },
   { subdomain: 'mobile.facebook.com', status: 'active', purpose: 'Mobile redirect', category: 'mobile' },
   { subdomain: 'touch.facebook.com', status: 'active', purpose: 'Touch-optimized mobile', category: 'mobile' },
   { subdomain: 'iphone.facebook.com', status: 'active', purpose: 'iPhone-specific mobile', category: 'mobile' },
@@ -87,7 +90,9 @@ const THUMPERSECURE_PREFIXES = [
   { subdomain: 'new.facebook.com', status: 'active', purpose: 'New features / redesign', category: 'product' },
   { subdomain: 'error.facebook.com', status: 'active', purpose: 'Error pages', category: 'product' },
   { subdomain: 'badge.facebook.com', status: 'active', purpose: 'Badge/verification system', category: 'product' },
-  // fb.com
+  // fb.com & Short Links
+  { subdomain: 'fb.com', status: 'active', purpose: 'Primary Facebook short domain', category: 'short-link' },
+  { subdomain: 'fb.me', status: 'active', purpose: 'Facebook short link domain', category: 'short-link' },
   { subdomain: 'www.fb.com', status: 'active', purpose: 'Short domain redirect', category: 'short-domain' },
   { subdomain: 's.fb.com', status: 'active', purpose: 'Short URLs', category: 'short-domain' },
   { subdomain: 'investor.fb.com', status: 'active', purpose: 'Investor relations', category: 'corporate' },
@@ -147,7 +152,7 @@ const METHOD_COMBINATIONS = [
   {
     id: 'profile-discovery',
     name: 'Profile Discovery',
-    prefixes: ['mbasic', 'm', 'touch', 'www'],
+    prefixes: ['mbasic', 'm', 'mtouch', 'touch', 'www'],
     description: 'Find profiles without login',
     osintUse: 'Person lookup, username resolution, unauthenticated viewing',
     steps: [
@@ -212,7 +217,7 @@ const METHOD_COMBINATIONS = [
   {
     id: 'short-link-resolution',
     name: 'Short Link Resolution',
-    prefixes: ['www.fb.com', 's.fb.com', 'l', 'lm'],
+    prefixes: ['fb.com', 'fb.me', 'www.fb.com', 's.fb.com', 'l', 'lm'],
     description: 'Resolve fb.com and Link Shim URLs',
     osintUse: 'Short link destination discovery, redirect chain tracing',
     steps: [
@@ -238,7 +243,7 @@ const METHOD_COMBINATIONS = [
   {
     id: 'mobile-variants',
     name: 'Mobile Variant Testing',
-    prefixes: ['mbasic', 'm', 'lite', 'zero', 'free', 'touch', 'iphone'],
+    prefixes: ['mbasic', 'm', 'mtouch', 'lite', 'zero', 'free', 'touch', 'iphone'],
     description: 'Test different mobile interfaces',
     osintUse: 'Content visibility differences, login bypass attempts',
     steps: [
@@ -292,9 +297,7 @@ function getCategories() {
 }
 
 function buildUrl(subdomain, path = '') {
-  const domain = subdomain.startsWith('http') ? subdomain : `https://${subdomain}`;
-  const p = path && !path.startsWith('/') ? `/${path}` : path || '';
-  return domain + p;
+  return buildSafeHostUrl(subdomain, path);
 }
 
 function getMethodCombination(id) {

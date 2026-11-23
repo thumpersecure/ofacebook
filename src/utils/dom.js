@@ -1,9 +1,11 @@
-export const $ = (sel, ctx = document) => ctx.querySelector(sel);
-export const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
+export const $ = (sel, ctx = typeof document !== 'undefined' ? document : null) =>
+  ctx ? ctx.querySelector(sel) : null;
+
+export const $$ = (sel, ctx = typeof document !== 'undefined' ? document : null) =>
+  ctx ? [...ctx.querySelectorAll(sel)] : [];
 
 export function on(el, event, handler, opts) {
-  if (!el) return () => {};
+  if (!el || typeof el.addEventListener !== 'function') return () => {};
   el.addEventListener(event, handler, opts);
   return () => el.removeEventListener(event, handler, opts);
 }
-

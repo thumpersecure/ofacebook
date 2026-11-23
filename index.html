@@ -3,52 +3,82 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Facebook OSINT Tool - Futuristic prefix-based research assistant using thumpersecure subdomain enumeration">
+  <meta name="theme-color" content="#060a10">
+  <meta name="description" content="FB OSINT Terminal 2036 — 110+ curated Facebook prefixes, instant URL generation, bulk export, and OSINT workflow assistant.">
+  <link rel="canonical" href="https://thumpersecure.github.io/ofacebook/">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <!--
     SECURITY: Content-Security-Policy restricts resource loading.
-    - default-src 'self': Only same-origin by default
-    - script-src 'self': No inline scripts, no eval - prevents XSS
-    - style-src 'self' https://fonts.googleapis.com: External fonts only from trusted CDN
-    - font-src 'self' https://fonts.gstatic.com: Font files from trusted CDN
-    - form-action 'self' base-uri 'self': Prevents form/base hijacking
-    - frame-ancestors 'self': Prevents clickjacking
-    - All processing is client-side; no sensitive data stored
+    - default-src 'self': Only same-origin resources by default
+    - script-src 'self': Zero inline scripts, zero inline event handlers, no eval
+    - style-src 'self' https://fonts.googleapis.com: Stylesheets from self and Google Fonts
+    - font-src 'self' https://fonts.gstatic.com: Font binaries from Google Fonts CDN
+    - connect-src 'self' https://api.openai.com https://api.anthropic.com: Optional BYO AI endpoints
+    - form-action 'self'; base-uri 'self': Prevents form/base hijacking
+    - img-src 'self' https://srv1540509.hstgr.cloud: Local SVG assets and analytics pixel
+    - Note: frame-ancestors is intentionally omitted here because GitHub Pages serves static
+      files without HTTP CSP response headers, and browsers ignore frame-ancestors inside <meta>.
   -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.openai.com https://api.anthropic.com; form-action 'self'; base-uri 'self'; frame-ancestors 'self'; img-src 'self' https://srv1540509.hstgr.cloud">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.openai.com https://api.anthropic.com; form-action 'self'; base-uri 'self'; img-src 'self' https://srv1540509.hstgr.cloud">
   <title>FB OSINT Terminal 2036 | Facebook Prefix Research</title>
+
   <!-- Open Graph -->
   <meta property="og:title" content="FB OSINT Terminal 2036">
-  <meta property="og:description" content="Prefix-based Facebook profile research tool. 2,800+ prefixes, bulk export, AI-powered method recommendations.">
+  <meta property="og:description" content="110+ curated Facebook prefixes, instant URL generation, bulk export, and OSINT workflow assistant.">
   <meta property="og:image" content="https://thumpersecure.github.io/ofacebook/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:url" content="https://thumpersecure.github.io/ofacebook">
+  <meta property="og:url" content="https://thumpersecure.github.io/ofacebook/">
   <meta property="og:type" content="website">
+
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="FB OSINT Terminal 2036">
-  <meta name="twitter:description" content="Prefix-based Facebook profile research tool. 2,800+ prefixes, bulk export, AI-powered method recommendations.">
+  <meta name="twitter:description" content="110+ curated Facebook prefixes, instant URL generation, bulk export, and OSINT workflow assistant.">
   <meta name="twitter:image" content="https://thumpersecure.github.io/ofacebook/og-image.png">
+
+  <!-- Non-blocking Google Fonts (activated by src/ui/theme-init.js) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link id="google-fonts" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet" media="print">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet"></noscript>
+
+  <!-- Preload critical ES modules for HTTP/2 startup -->
+  <link rel="modulepreload" href="app.js">
+  <link rel="modulepreload" href="src/app/init.js">
+  <link rel="modulepreload" href="src/prefix-library.js">
+
+  <script src="src/ui/theme-init.js"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to main content</a>
-  <div class="scanlines" aria-hidden="true"></div>
+  <div class="ambient-bg" aria-hidden="true"></div>
   <div class="grid-bg" aria-hidden="true"></div>
-  <div class="glow-orb glow-orb--1" aria-hidden="true"></div>
-  <div class="glow-orb glow-orb--2" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
 
   <header class="header">
     <div class="header__inner">
-      <div class="logo">
-        <span class="logo__icon">◈</span>
-        <span class="logo__text">FB OSINT</span>
-        <span class="logo__year">2036</span>
+      <div class="header__brand">
+        <h1 class="logo">
+          <span class="logo__icon" aria-hidden="true">◈</span>
+          <span class="logo__text">FB OSINT</span>
+          <span class="logo__year">2036</span>
+        </h1>
+        <span class="header__stat" title="Verified prefix dataset"><strong id="stat-prefixes">113</strong> prefixes</span>
       </div>
+
+      <nav class="nav" role="tablist" aria-label="Workspace panels">
+        <button type="button" class="nav__btn nav__btn--active" role="tab" id="tab-0" aria-selected="true" aria-controls="panel-0" data-panel="0">Search</button>
+        <button type="button" class="nav__btn" role="tab" id="tab-1" aria-selected="false" aria-controls="panel-1" data-panel="1">Library</button>
+        <button type="button" class="nav__btn" role="tab" id="tab-2" aria-selected="false" aria-controls="panel-2" data-panel="2">Methods</button>
+      </nav>
+
       <div class="header__controls">
+        <button type="button" id="cmd-palette-btn" class="header-cmd-btn" aria-label="Open command palette" title="Command palette (Ctrl/Cmd+K)">
+          <span class="header-cmd-btn__label">Commands</span>
+          <kbd>⌘K</kbd>
+        </button>
         <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle theme (T)">
           <span class="theme-toggle__icon" aria-hidden="true">◐</span>
         </button>
@@ -56,45 +86,48 @@
           <span class="upgrade-btn__text">Settings</span>
         </button>
       </div>
-      <nav class="nav" role="navigation">
-        <button type="button" class="nav__btn nav__btn--active" aria-pressed="true" data-panel="0">Search</button>
-        <button type="button" class="nav__btn" aria-pressed="false" data-panel="1">Library</button>
-        <button type="button" class="nav__btn" aria-pressed="false" data-panel="2">Methods</button>
-      </nav>
     </div>
   </header>
 
-  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <noscript>
+    <div class="noscript-banner">FB OSINT Terminal requires JavaScript to run client-side URL generation and workflow tools.</div>
+  </noscript>
 
   <main class="main" id="main-content">
     <!-- Search Panel -->
-    <section class="main-panel main-panel--active" data-panel="0">
-      <section class="search-section">
-        <div class="search-box glass">
+    <section id="panel-0" role="tabpanel" aria-labelledby="tab-0" class="main-panel main-panel--active" data-panel="0">
+      <section class="search-section" aria-label="Target query">
+        <div class="search-box surface">
           <label for="search-input" class="visually-hidden">Target identifier</label>
           <div class="search-box__input-wrap">
-            <span class="search-box__prefix">&gt;</span>
+            <span class="search-box__prefix" aria-hidden="true">&gt;</span>
             <input
-              type="search"
+              type="text"
+              inputmode="search"
               id="search-input"
               class="search-box__input"
-              placeholder="Username, ID, or path..."
+              placeholder="Username, numeric ID, path, or Facebook URL..."
               autocomplete="off"
+              spellcheck="false"
               aria-describedby="search-hint"
             >
+            <button type="button" id="search-clear-btn" class="search-box__clear" aria-label="Clear search" hidden>×</button>
           </div>
-          <p id="search-hint" class="search-box__hint">Enter Facebook username, numeric ID, or path. Results open in new tab.</p>
+          <p id="search-hint" class="search-box__hint">Enter a Facebook username, numeric ID, or paste a full URL. Results open in a new tab.</p>
           <div class="search-box__actions">
             <button type="button" class="search-box__submit" aria-label="Execute search">
               <span class="search-box__submit-text">Execute</span>
-              <span class="search-box__submit-icon">▶</span>
+              <span class="search-box__submit-icon" aria-hidden="true">▶</span>
             </button>
-            <button type="button" id="url-copy-btn" class="search-box__copy" aria-label="Copy URL">Copy</button>
+            <button type="button" id="url-copy-btn" class="search-box__copy" aria-label="Copy URL">Copy URL</button>
             <output id="url-output" class="search-box__url-preview" for="search-input">https://www.facebook.com/</output>
           </div>
+          <div id="recent-targets" class="recent-targets" hidden></div>
         </div>
 
-        <div class="method-selector glass">
+        <div class="method-selector surface">
           <span class="method-selector__label">Quick methods</span>
           <div class="method-selector__chips">
             <button type="button" class="method-chip" data-goal="profile-discovery" data-query="find profile">Profile</button>
@@ -102,76 +135,92 @@
             <button type="button" class="method-chip" data-goal="business-intel" data-query="business research">Business</button>
             <button type="button" class="method-chip" data-goal="api-discovery" data-query="api discovery">API</button>
             <button type="button" class="method-chip" data-goal="locale-search" data-query="locale search">Locale</button>
+            <button type="button" class="method-chip" data-goal="mobile-variants" data-query="mobile variants">Mobile</button>
+            <button type="button" class="method-chip" data-goal="short-link-resolution" data-query="short link resolution">Short Links</button>
+            <button type="button" class="method-chip" data-goal="infrastructure-enum" data-query="infrastructure enum">Infra</button>
           </div>
         </div>
       </section>
 
-      <section class="results-section">
-        <h2 class="results__title">Query Results</h2>
-        <div class="results-toolbar glass" aria-label="Results actions">
+      <section class="results-section" aria-label="Generated targets">
+        <div class="results__header">
+          <h2 class="results__title">Query Results</h2>
+          <span id="results-count" class="results__count"></span>
+        </div>
+        <div class="results-toolbar surface" aria-label="Results actions">
           <div class="results-toolbar__left">
             <span class="results-toolbar__label">Goal</span>
             <span class="results-toolbar__value" id="active-goal">Profile Discovery</span>
           </div>
           <div class="results-toolbar__right">
             <button type="button" class="btn results-toolbar__btn" id="save-preset-btn" aria-label="Save current target as preset">Save preset</button>
+            <button type="button" class="btn results-toolbar__btn" id="copy-all-btn" aria-label="Copy all generated URLs">Copy all</button>
             <button type="button" class="btn results-toolbar__btn" id="export-csv-btn" aria-label="Export last results to CSV">Export CSV</button>
             <button type="button" class="btn results-toolbar__btn" id="bulk-open-btn" aria-label="Bulk open last results">Bulk open</button>
           </div>
         </div>
         <div class="results-grid" id="results-grid">
           <div class="results-placeholder">
-            <p>Enter a username or ID above and click Execute. The assistant will recommend the best prefix combinations.</p>
+            <p>Enter a username, numeric ID, or Facebook URL above and click Execute to generate curated OSINT prefix links.</p>
           </div>
         </div>
       </section>
     </section>
 
     <!-- Library Panel -->
-    <section class="main-panel" data-panel="1">
-      <div class="library-header glass">
-        <h2>Prefix Library</h2>
-        <p>Subdomains from <a href="https://github.com/thumpersecure/thumpersecure/blob/main/facebook-prefix-list.md" target="_blank" rel="noopener noreferrer">thumpersecure</a>. Click to open with your search path.</p>
+    <section id="panel-1" role="tabpanel" aria-labelledby="tab-1" class="main-panel" data-panel="1" hidden>
+      <div class="library-header surface">
+        <div class="library-header__top">
+          <h2>Prefix Library</h2>
+          <span id="library-count" class="library-count"></span>
+        </div>
+        <p>Curated subdomains from <a href="https://github.com/thumpersecure/thumpersecure/blob/main/facebook-prefix-list.md" target="_blank" rel="noopener noreferrer">thumpersecure</a>. Click a card to open with your search path.</p>
         <label for="library-filter" class="visually-hidden">Filter prefixes</label>
-        <input type="search" id="library-filter" class="library-filter" placeholder="Filter by domain, category..." autocomplete="off" aria-label="Filter prefixes">
+        <input type="search" id="library-filter" class="library-filter" placeholder="Filter by domain, category, or purpose..." autocomplete="off" spellcheck="false" aria-label="Filter prefixes">
+        <div id="library-categories" class="category-pills" role="group" aria-label="Filter by category"></div>
       </div>
       <div class="prefix-grid" id="prefix-list"></div>
     </section>
 
     <!-- Methods Panel -->
-    <section class="main-panel" data-panel="2">
-      <div class="methods-header glass">
+    <section id="panel-2" role="tabpanel" aria-labelledby="tab-2" class="main-panel" data-panel="2" hidden>
+      <div class="methods-header surface">
         <h2>Method Combinations</h2>
-        <p>Recommended prefix combinations for specific OSINT goals.</p>
+        <p>Explore <span id="stat-methods">10</span> curated prefix workflows tailored for specific OSINT goals.</p>
       </div>
       <div class="combo-grid" id="combo-list"></div>
     </section>
 
-    <aside class="chat-panel glass" id="chat-panel">
+    <!-- Assistant Panel -->
+    <aside class="chat-panel surface" id="chat-panel" aria-label="OSINT Assistant">
       <div class="chat-panel__header">
         <h2 class="chat-panel__title">Assistant</h2>
-        <button type="button" class="chat-panel__toggle" aria-expanded="true" aria-controls="chat-messages">
-          <span class="chat-panel__toggle-icon">−</span>
+        <button type="button" class="chat-panel__toggle" aria-expanded="true" aria-controls="chat-body" aria-label="Toggle assistant panel">
+          <span class="chat-panel__toggle-icon" aria-hidden="true">−</span>
         </button>
       </div>
-      <div class="chat-panel__messages" id="chat-messages"></div>
-      <div class="chat-panel__input-wrap">
-        <label for="chat-input" class="visually-hidden">Ask assistant</label>
-        <input
-          type="text"
-          id="chat-input"
-          class="chat-panel__input"
-          placeholder="e.g. find profile, track links..."
-          aria-label="Ask assistant"
-        >
-        <button type="button" class="chat-panel__send" aria-label="Send">↑</button>
+      <div id="chat-body" class="chat-panel__body">
+        <div class="chat-panel__messages" id="chat-messages" aria-live="polite"></div>
+        <div class="chat-panel__input-wrap">
+          <label for="chat-input" class="visually-hidden">Ask assistant</label>
+          <input
+            type="text"
+            id="chat-input"
+            class="chat-panel__input"
+            placeholder="e.g. find profile, track links..."
+            autocomplete="off"
+            aria-label="Ask assistant"
+          >
+          <button type="button" class="chat-panel__send" aria-label="Send message">↑</button>
+        </div>
       </div>
     </aside>
   </main>
 
+  <!-- Command Palette -->
   <div id="command-palette" class="command-palette" role="dialog" aria-modal="true" aria-labelledby="command-palette-title" hidden>
     <div class="command-palette__backdrop" data-command-close="true"></div>
-    <div class="command-palette__content glass">
+    <div class="command-palette__content surface">
       <div class="command-palette__header">
         <h2 id="command-palette-title" class="command-palette__title">Command Palette</h2>
         <span class="command-palette__hint" aria-hidden="true">Esc</span>
@@ -181,28 +230,47 @@
         type="search"
         id="command-input"
         class="command-palette__input"
-        placeholder="Search prefixes, methods, actions..."
+        placeholder="Search prefixes, methods, presets, actions..."
         autocomplete="off"
+        spellcheck="false"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-controls="command-results"
+        aria-expanded="false"
         aria-label="Command search"
       >
       <div id="command-results" class="command-palette__results" role="listbox" aria-label="Command results"></div>
+      <div class="command-palette__footer" aria-hidden="true">
+        <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+        <span><kbd>↵</kbd> run</span>
+        <span><kbd>Esc</kbd> close</span>
+      </div>
     </div>
   </div>
 
-  <div id="modal-container" class="modal-container" role="dialog" aria-modal="true" hidden>
+  <!-- Modal -->
+  <div id="modal-container" class="modal-container" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
     <div class="modal__backdrop" data-modal-close="true"></div>
-    <div class="modal__content glass" role="document">
+    <div class="modal__content surface" role="document">
       <button type="button" class="modal__close" data-modal-close="true" aria-label="Close modal">×</button>
       <div id="modal-body" class="modal__body"></div>
     </div>
   </div>
 
   <footer class="footer">
-    <span class="footer__status">System online</span>
-    <span class="footer__version">v2.0.36 | <a href="https://github.com/thumpersecure/thumpersecure/blob/main/facebook-prefix-list.md" target="_blank" rel="noopener noreferrer">thumpersecure</a></span>
-    <span class="footer__version"><a href="https://secure.facebook.com/u255255255" target="_blank" rel="noopener noreferrer">facebook</a></span>
+    <div class="footer__inner">
+      <span class="footer__status">System online</span>
+      <div class="footer__links">
+        <span class="footer__version">v2.0.36</span>
+        <span class="footer__sep" aria-hidden="true">·</span>
+        <a href="https://github.com/thumpersecure/thumpersecure/blob/main/facebook-prefix-list.md" target="_blank" rel="noopener noreferrer">thumpersecure</a>
+        <span class="footer__sep" aria-hidden="true">·</span>
+        <a href="https://secure.facebook.com/u255255255" target="_blank" rel="noopener noreferrer">facebook</a>
+      </div>
+    </div>
   </footer>
+
   <script type="module" src="app.js"></script>
-<img src="https://srv1540509.hstgr.cloud/p.gif?s=ofacebook&p=/index.html" alt="" width="1" height="1" hidden>
+  <img src="https://srv1540509.hstgr.cloud/p.gif?s=ofacebook&p=/index.html" alt="" width="1" height="1" loading="lazy" decoding="async" hidden>
 </body>
 </html>
