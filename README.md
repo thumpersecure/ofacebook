@@ -41,10 +41,18 @@ Then open `http://localhost:5173`.
 
 ## Security model
 
-- **Client-side only**: no backend, no tracking, no user accounts
+- **Client-side only**: no backend and no user accounts; optional visit counter pixel in `index.html` (`loading="lazy"`)
 - **Strict CSP**: no inline scripts; explicit `connect-src` allow-list for optional assistant providers
-- **Input sanitization**: URL/path sanitization to reduce injection risk
+- **Input sanitization**: URL/path extraction, XSS-safe HTML escaping, Link Shim scheme validation, and CSV formula protection
 - **Security contact**: `security.txt` and `/.well-known/security.txt`
+
+## Tests
+
+Run the zero-dependency Node test suite (Node 22+):
+
+```bash
+npm test
+```
 
 ## Repo layout (high level)
 
